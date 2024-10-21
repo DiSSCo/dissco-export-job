@@ -29,7 +29,7 @@ public class DoiListService extends AbstractExportJobService {
 
   protected void writeHeaderToFile() throws IOException {
     try (
-        var byteOutputStream = new FileOutputStream(TEMP_FILE_NAME, true);
+        var byteOutputStream = new FileOutputStream(TEMP_FILE_NAME);
         var gzip = new GZIPOutputStream(byteOutputStream)) {
       gzip.write(HEADER, 0, HEADER.length);
     }

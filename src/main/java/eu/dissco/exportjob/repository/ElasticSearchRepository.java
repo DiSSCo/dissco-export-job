@@ -39,7 +39,6 @@ public class ElasticSearchRepository {
       var count = client.count(countRequest);
       return count.count();
     } catch (Exception e){
-      log.error("error", e);
       throw e;
     }
   }
@@ -84,7 +83,7 @@ public class ElasticSearchRepository {
           .replace("]", ".")
           + "keyword";
       var val = searchParam.inputValue();
-      if (val.isEmpty()) {
+      if (val == null || val.isEmpty()) {
         qList.add(
             new Query.Builder().bool(b -> b.mustNot(q -> q.exists(e -> e.field(key)))).build());
       } else {
