@@ -23,7 +23,7 @@ public class JobRequestComponent {
     var searchParams = new ArrayList<SearchParam>();
     if (properties.getInputFields().size() != properties.getInputValues().size()) {
       log.error("Mismatch between input fields and input values for searching");
-      client.updateJobState(properties.getJobId(), JobStateEndpoint.FAILED.getEndpoint());
+      client.updateJobState(properties.getJobId(), JobStateEndpoint.FAILED);
       throw new FailedProcessingException();
     }
     for (int i = 0; i < properties.getInputFields().size(); i++) {

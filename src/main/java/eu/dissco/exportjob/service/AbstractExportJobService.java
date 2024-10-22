@@ -26,7 +26,7 @@ public abstract class AbstractExportJobService {
 
 
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
-    exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING.getEndpoint());
+    exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING);
     try {
       var uploadData = processSearchResults(jobRequest);
       if (uploadData){
@@ -37,7 +37,7 @@ public abstract class AbstractExportJobService {
       }
     } catch (IOException e) {
       log.error("An error has occurred", e);
-      exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.FAILED.getEndpoint());
+      exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.FAILED);
     }
   }
 

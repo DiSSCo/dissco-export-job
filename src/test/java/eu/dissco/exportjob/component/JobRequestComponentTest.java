@@ -68,7 +68,7 @@ class JobRequestComponentTest {
     assertThrows(FailedProcessingException.class, () -> jobRequestComponent.getJobRequest());
 
     // Then
-    then(client).should().updateJobState(JOB_ID, JobStateEndpoint.FAILED.getEndpoint());
+    then(client).should().updateJobState(JOB_ID, JobStateEndpoint.FAILED);
   }
 
 }

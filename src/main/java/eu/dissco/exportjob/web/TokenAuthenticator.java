@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
@@ -35,6 +36,7 @@ public class TokenAuthenticator {
             r -> Mono.error(new FailedProcessingException("Service is unauthorized.")))
         .bodyToMono(JsonNode.class)
         .retryWhen(Retry.fixedDelay(3, Duration.ofSeconds(2))
+            .filter(TokenAuthenticator::is5xxServerError)
             .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) ->
                 new FailedProcessingException(
                     "Token Authentication failed to process after max retries")
@@ -58,6 +60,11 @@ public class TokenAuthenticator {
     log.debug("Unexpected response from keycloak server. Unable to parse access_token");
     throw new FailedProcessingException(
         "Unable to authenticate processing service with Keycloak. An error has occurred parsing keycloak response");
+  }
+
+  private static boolean is5xxServerError(Throwable throwable) {
+    return throwable instanceof WebClientResponseException webClientResponseException
+        && webClientResponseException.getStatusCode().is5xxServerError();
   }
 
 }
