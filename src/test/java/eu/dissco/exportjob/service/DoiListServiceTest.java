@@ -1,5 +1,6 @@
 package eu.dissco.exportjob.service;
 
+import static eu.dissco.exportjob.Profiles.DOI_LIST;
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
@@ -19,8 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles(profiles = DOI_LIST)
 class DoiListServiceTest {
 
   private DoiListService service;
