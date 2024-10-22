@@ -1,5 +1,6 @@
 package eu.dissco.exportjob.web;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
@@ -17,6 +19,7 @@ public class ExporterBackendClient {
 
   @Qualifier("exporterClient")
   private final WebClient webClient;
+  private final ObjectMapper mapper;
   private final TokenAuthenticator tokenAuthenticator;
 
   public void updateJobState(UUID jobId, String path) throws FailedProcessingException {
@@ -37,13 +40,16 @@ public class ExporterBackendClient {
     }
   }
 
-  // todo -> define body in backend
-  public void markJobAsComplete(UUID jobId) throws FailedProcessingException {
+  public void markJobAsComplete(UUID jobId, String downloadLink) throws FailedProcessingException {
+    var body = mapper.createObjectNode()
+        .put("id", jobId.toString())
+        .put("downloadLink", downloadLink);
     try {
       webClient
           .method(HttpMethod.POST)
           .uri(uriBuilder -> uriBuilder.path("/complete").build())
           .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
+          .body(BodyInserters.fromValue(body))
           .retrieve()
           .toBodilessEntity().toFuture().get();
     } catch (ExecutionException  e) {

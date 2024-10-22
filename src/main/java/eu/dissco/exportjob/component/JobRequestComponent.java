@@ -1,15 +1,14 @@
 package eu.dissco.exportjob.component;
 
 import eu.dissco.exportjob.domain.JobRequest;
+import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.domain.SearchParam;
-import eu.dissco.exportjob.domain.TargetType;
-import jakarta.validation.constraints.NotBlank;
+import eu.dissco.exportjob.exceptions.FailedProcessingException;
+import eu.dissco.exportjob.properties.JobProperties;
+import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,34 +16,22 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JobRequestComponent {
 
-  @NotBlank
-  @Value("#{'${job.input-fields}'.split(',')}")
-  List<String> inputFields;
+  private final JobProperties properties;
+  private final ExporterBackendClient client;
 
-  @NotBlank
-  @Value("#{'${job.input-values}'.split(',')}")
-  List<String> inputValues;
-
-  @NotBlank
-  @Value("${job.target-type}")
-  TargetType targetType;
-
-  @NotBlank
-  @Value("${job.id}")
-  UUID jobId;
-
-  public JobRequest getJobRequest() {
+  public JobRequest getJobRequest() throws FailedProcessingException {
     var searchParams = new ArrayList<SearchParam>();
-    if (inputFields.size() != inputValues.size()) {
+    if (properties.getInputFields().size() != properties.getInputValues().size()) {
       log.error("Mismatch between input fields and input values for searching");
-      throw new IllegalStateException();
+      client.updateJobState(properties.getJobId(), JobStateEndpoint.FAILED.getEndpoint());
+      throw new FailedProcessingException();
     }
-    for (int i = 0; i < inputFields.size(); i++) {
-      searchParams.add(new SearchParam(inputFields.get(i), inputValues.get(i)));
+    for (int i = 0; i < properties.getInputFields().size(); i++) {
+      searchParams.add(new SearchParam(properties.getInputFields().get(i), properties.getInputValues().get(i)));
     }
-    log.info("Received {} job request with id {} and {} search parameters", targetType, jobId,
+    log.info("Received {} job request with id {} and {} search parameters", properties.getTargetType(), properties.getJobId(),
         searchParams);
-    return new JobRequest(searchParams, targetType, jobId);
+    return new JobRequest(searchParams, properties.getTargetType(), properties.getJobId());
   }
 
 }

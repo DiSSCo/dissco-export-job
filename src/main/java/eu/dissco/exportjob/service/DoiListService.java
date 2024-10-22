@@ -3,6 +3,7 @@ package eu.dissco.exportjob.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
+import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,9 +23,9 @@ public class DoiListService extends AbstractExportJobService {
       StandardCharsets.UTF_8);
 
   public DoiListService(
-      ElasticSearchRepository elasticSearchRepository,
-      ExporterBackendClient exporterBackendClient) {
-    super(elasticSearchRepository, exporterBackendClient);
+      ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
+      S3Repository s3Repository) {
+    super(elasticSearchRepository, exporterBackendClient, s3Repository);
   }
 
   protected void writeHeaderToFile() throws IOException {

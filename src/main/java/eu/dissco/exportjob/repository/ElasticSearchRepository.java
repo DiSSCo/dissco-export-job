@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -35,12 +34,7 @@ public class ElasticSearchRepository {
         .query(
             q -> q.bool(b -> b.must(query)))
         .build();
-    try {
-      var count = client.count(countRequest);
-      return count.count();
-    } catch (Exception e){
-      throw e;
-    }
+    return client.count(countRequest).count();
   }
 
   public List<JsonNode> getTargetObjects(List<SearchParam> searchParams, TargetType targetType,

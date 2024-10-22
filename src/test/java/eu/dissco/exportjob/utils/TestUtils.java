@@ -23,18 +23,20 @@ public class TestUtils {
   public static final UUID JOB_ID = UUID.fromString("cd5c9ee7-23b1-4615-993e-9d56d0720213");
   public static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules()
       .setSerializationInclusion(Include.NON_NULL);
+  public static final String DOWNLOAD_LINK = "https://aws.download/s3";
+  public static final String ORG_FIELD_NAME = "$['ods:organisationID']";
 
-  private static JobRequest givenJobRequest() {
+  public static JobRequest givenJobRequest() {
     return new JobRequest(
         givenSearchParams(),
         TargetType.DIGITAL_SPECIMEN,
-        UUID.randomUUID()
+        JOB_ID
     );
   }
 
   public static List<SearchParam> givenSearchParams() {
     return List.of(new SearchParam(
-        "$['ods:organisationID']", ORG_1));
+        ORG_FIELD_NAME, ORG_1));
   }
 
   public static JsonNode givenDigitalSpecimen(){
