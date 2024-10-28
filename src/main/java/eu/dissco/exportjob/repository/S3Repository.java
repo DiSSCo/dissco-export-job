@@ -1,6 +1,8 @@
 package eu.dissco.exportjob.repository;
 
 import java.io.File;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -12,6 +14,7 @@ import software.amazon.awssdk.transfer.s3.S3TransferManager;
 public class S3Repository {
 
   private final S3AsyncClient s3Client;
+  private final DateTimeFormatter formatter;
   private static final String BUCKET_NAME = "dissco-data-export";
 
   public String uploadResults(File file, UUID jobId) {
@@ -20,7 +23,7 @@ public class S3Repository {
           .uploadFile(uploadFileRequest -> uploadFileRequest
               .putObjectRequest(putObjectRequest -> putObjectRequest
                   .bucket(BUCKET_NAME)
-                  .key(jobId.toString()))
+                  .key(getDate() + "/" + jobId.toString()))
               .source(file));
       upload.completionFuture().join();
       return s3Client.utilities().getUrl(
@@ -31,5 +34,8 @@ public class S3Repository {
     }
   }
 
+  private String getDate() {
+    return formatter.format(Instant.now());
+  }
 
 }

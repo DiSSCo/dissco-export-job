@@ -25,6 +25,8 @@ public class TestUtils {
       .setSerializationInclusion(Include.NON_NULL);
   public static final String DOWNLOAD_LINK = "https://aws.download/s3";
   public static final String ORG_FIELD_NAME = "$['ods:organisationID']";
+  public static final String ID_FIELD = "dcterms:identifier";
+  public static final String PHYS_ID_FIELD = "ods:physicalSpecimenID";
 
   public static JobRequest givenJobRequest() {
     return new JobRequest(
@@ -45,9 +47,23 @@ public class TestUtils {
 
   public static JsonNode givenDigitalSpecimen(String doi, String org, String physId){
     return MAPPER.createObjectNode()
-        .put("ods:ID", doi)
+        .put(ID_FIELD, doi)
         .put("@id", doi)
         .put("ods:organisationID", org)
-        .put("ods:physicalSpecimenID", physId);
+        .put(PHYS_ID_FIELD, physId);
+  }
+
+  public static JsonNode givenDigitalSpecimenReducedDoiList(){
+    return givenDigitalSpecimenReducedDoiList(DOI_1, PHYS_ID_1);
+  }
+
+  public static JsonNode givenDigitalSpecimenReducedDoiList(String doi, String physId){
+    return MAPPER.createObjectNode()
+        .put(ID_FIELD, doi)
+        .put(PHYS_ID_FIELD, physId);
+  }
+
+  public static List<String> givenTargetFields(){
+    return List.of(ID_FIELD, PHYS_ID_FIELD);
   }
 }

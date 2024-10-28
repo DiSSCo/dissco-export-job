@@ -2,10 +2,13 @@ package eu.dissco.exportjob.repository;
 
 import static eu.dissco.exportjob.utils.TestUtils.DOI_2;
 import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
+import static eu.dissco.exportjob.utils.TestUtils.ORG_1;
 import static eu.dissco.exportjob.utils.TestUtils.ORG_2;
 import static eu.dissco.exportjob.utils.TestUtils.PHYS_ID_2;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
+import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimenReducedDoiList;
 import static eu.dissco.exportjob.utils.TestUtils.givenSearchParams;
+import static eu.dissco.exportjob.utils.TestUtils.givenTargetFields;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -99,19 +102,6 @@ public class ElasticSearchRepositoryTest {
   }
 
   @Test
-  void testGetTotalHits() throws IOException {
-    // Given
-    postDigitalSpecimens(
-        List.of(givenDigitalSpecimen(), givenDigitalSpecimen(DOI_2, ORG_2, PHYS_ID_2)));
-
-    // When
-    var result = elasticRepository.getTotalHits(givenSearchParams(), TargetType.DIGITAL_SPECIMEN);
-
-    // Then
-    assertThat(result).isEqualTo(1L);
-  }
-
-  @Test
   void testGetTargetObject() throws IOException {
     // Given
     postDigitalSpecimens(
@@ -119,10 +109,24 @@ public class ElasticSearchRepositoryTest {
 
     // When
     var result = elasticRepository.getTargetObjects(givenSearchParams(),
-        TargetType.DIGITAL_SPECIMEN, 1);
+        TargetType.DIGITAL_SPECIMEN, null, givenTargetFields());
 
     // Then
-    assertThat(result).isEqualTo(List.of(givenDigitalSpecimen()));
+    assertThat(result).isEqualTo(List.of(givenDigitalSpecimenReducedDoiList()));
+  }
+
+  @Test
+  void testGetTargetObjectSecondPage() throws IOException {
+    // Given
+    postDigitalSpecimens(
+        List.of(givenDigitalSpecimen(), givenDigitalSpecimen(DOI_2, ORG_1, PHYS_ID_2)));
+
+    // When
+    var result = elasticRepository.getTargetObjects(givenSearchParams(),
+        TargetType.DIGITAL_SPECIMEN, DOI_2, givenTargetFields());
+
+    // Then
+    assertThat(result).isEqualTo(List.of(givenDigitalSpecimenReducedDoiList()));
   }
 
   @Test
@@ -135,7 +139,7 @@ public class ElasticSearchRepositoryTest {
     var searchParam = List.of(new SearchParam("$['ods:organisationID']", null));
 
     // When
-    var result = elasticRepository.getTargetObjects(searchParam, TargetType.DIGITAL_SPECIMEN, 1);
+    var result = elasticRepository.getTargetObjects(searchParam, TargetType.DIGITAL_SPECIMEN, null, null);
 
     // Then
     assertThat(result).isEqualTo(List.of(expected));

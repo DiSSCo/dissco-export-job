@@ -1,8 +1,8 @@
 package eu.dissco.exportjob.repository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
-import co.elastic.clients.elasticsearch.core.CountRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,36 +22,34 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class ElasticSearchRepository {
+
   private final ElasticsearchClient client;
   private final ElasticSearchProperties properties;
-
-  public Long getTotalHits(List<SearchParam> searchParams, TargetType targetType)
-      throws IOException {
-    var query = generateQuery(searchParams);
-    var index = getIndex(targetType);
-    var countRequest = new CountRequest.Builder()
-        .index(index)
-        .query(
-            q -> q.bool(b -> b.must(query)))
-        .build();
-    return client.count(countRequest).count();
-  }
+  private static final String SORT_BY = "dcterms:identifier.keyword";
 
   public List<JsonNode> getTargetObjects(List<SearchParam> searchParams, TargetType targetType,
-      int pageNumber)
+      String lastId, List<String> targetFields)
       throws IOException {
     var query = generateQuery(searchParams);
     var index = getIndex(targetType);
 
-    var searchRequest = new SearchRequest.Builder()
+    var searchRequestBuilder = new SearchRequest.Builder()
         .index(index)
         .query(
             q -> q.bool(b -> b.must(query)))
         .trackTotalHits(t -> t.enabled(Boolean.TRUE))
-        .from(getOffset(pageNumber, properties.getPageSize()))
         .size(properties.getPageSize())
-        .build();
-    var searchResult = client.search(searchRequest, ObjectNode.class);
+        .sort(s -> s.field(f -> f.field(SORT_BY).order(SortOrder.Desc)));
+    if (lastId != null) {
+      searchRequestBuilder
+          .searchAfter(sa -> sa.stringValue(lastId));
+    }
+    if (targetFields != null) {
+      searchRequestBuilder
+          .source(sourceConfig -> sourceConfig
+              .filter(filter -> filter.includes(targetFields)));
+    }
+    var searchResult = client.search(searchRequestBuilder.build(), ObjectNode.class);
 
     return searchResult.hits().hits().stream()
         .map(Hit::source)
@@ -64,7 +62,6 @@ public class ElasticSearchRepository {
     return targetType == TargetType.DIGITAL_SPECIMEN ? properties.getDigitalSpecimenIndex()
         : properties.getDigitalMediaObjectIndex();
   }
-
 
   private static List<Query> generateQuery(List<SearchParam> searchParams) {
     var qList = new ArrayList<Query>();
@@ -86,14 +83,6 @@ public class ElasticSearchRepository {
       }
     }
     return qList;
-  }
-
-  private static int getOffset(int pageNumber, int pageSize) {
-    int offset = 0;
-    if (pageNumber > 1) {
-      offset = offset + (pageSize * (pageNumber - 1));
-    }
-    return offset;
   }
 
 }

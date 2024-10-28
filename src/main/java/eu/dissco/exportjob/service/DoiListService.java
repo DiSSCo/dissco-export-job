@@ -17,9 +17,7 @@ import org.springframework.stereotype.Service;
 @Profile(Profiles.DOI_LIST)
 public class DoiListService extends AbstractExportJobService {
 
-  private static final String ODS_ID = "ods:ID";
-  private static final String PHYSICAL_ID = "ods:physicalSpecimenID";
-  private static final byte[] HEADER = (ODS_ID + "," + PHYSICAL_ID).getBytes(
+  private static final byte[] HEADER = (ID_FIELD + "," + PHYSICAL_ID_FIELD).getBytes(
       StandardCharsets.UTF_8);
 
   public DoiListService(
@@ -41,10 +39,16 @@ public class DoiListService extends AbstractExportJobService {
         var byteOutputStream = new FileOutputStream(TEMP_FILE_NAME, true);
         var gzip = new GZIPOutputStream(byteOutputStream)) {
       for (var result : searchResults) {
-        var col = ("\n" + result.get(ODS_ID).asText() + "," + result.get(PHYSICAL_ID).asText())
+        var col = ("\n" + result.get(ID_FIELD).asText() + "," + result.get(PHYSICAL_ID_FIELD).asText())
             .getBytes(StandardCharsets.UTF_8);
         gzip.write(col, 0, col.length);
       }
     }
   }
+
+  protected List<String> targetFields(){
+   return List.of(ID_FIELD, PHYSICAL_ID_FIELD);
+  }
+
+
 }

@@ -6,7 +6,6 @@ import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -43,8 +42,8 @@ class DoiListServiceTest {
   @Test
   void testHandleMessageNoResultsFound() throws Exception {
     // Given
-    given(elasticSearchRepository.getTotalHits(any(), any())).willReturn(0L);
-
+    given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
+        List.of());
     // When
     service.handleMessage(givenJobRequest());
 
@@ -57,8 +56,7 @@ class DoiListServiceTest {
   @Test
   void testHandleMessage() throws Exception {
     // GIven
-    given(elasticSearchRepository.getTotalHits(any(), any())).willReturn(1L);
-    given(elasticSearchRepository.getTargetObjects(any(), any(), anyInt())).willReturn(
+    given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of(givenDigitalSpecimen()));
     given(s3Repository.uploadResults(any(), eq(JOB_ID))).willReturn(DOWNLOAD_LINK);
 
