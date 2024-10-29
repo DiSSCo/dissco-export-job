@@ -18,18 +18,19 @@ public class S3Repository {
   private static final String BUCKET_NAME = "dissco-data-export";
 
   public String uploadResults(File file, UUID jobId) {
+    var key = getDate() +"/" + jobId.toString();
     try (var transferManager = S3TransferManager.builder().s3Client(s3Client).build()) {
       var upload = transferManager
           .uploadFile(uploadFileRequest -> uploadFileRequest
               .putObjectRequest(putObjectRequest -> putObjectRequest
                   .bucket(BUCKET_NAME)
-                  .key(getDate() + "/" + jobId.toString()))
+                  .key(key))
               .source(file));
       upload.completionFuture().join();
       return s3Client.utilities().getUrl(
               builder -> builder
                   .bucket(BUCKET_NAME)
-                  .key(jobId.toString()))
+                  .key(key))
           .toString();
     }
   }
