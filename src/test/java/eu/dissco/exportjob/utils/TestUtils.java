@@ -25,7 +25,7 @@ public class TestUtils {
       .setSerializationInclusion(Include.NON_NULL);
   public static final String DOWNLOAD_LINK = "https://aws.download/s3";
   public static final String ORG_FIELD_NAME = "$['ods:organisationID']";
-  public static final String ID_FIELD = "dcterms:identifier";
+  public static final String ID_FIELD = "ods:ID";
   public static final String PHYS_ID_FIELD = "ods:physicalSpecimenID";
 
   public static JobRequest givenJobRequest() {
