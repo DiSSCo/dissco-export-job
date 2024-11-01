@@ -1,8 +1,5 @@
 package eu.dissco.exportjob.service;
 
-import static eu.dissco.exportjob.service.DoiListService.ID_FIELD;
-
-import co.elastic.clients.elasticsearch._types.query_dsl.FieldAndFormat;
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
@@ -36,10 +33,12 @@ public abstract class AbstractExportJobService {
       var uploadData = processSearchResults(jobRequest);
       if (uploadData) {
         var url = s3Repository.uploadResults(new File(TEMP_FILE_NAME), jobRequest.jobId());
+        log.info("Successfully posted results to s3 at url {}", url);
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), url);
       } else {
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), null);
       }
+      log.info("Successfully completed job {}", jobRequest.jobId());
     } catch (IOException e) {
       log.error("An error has occurred", e);
       exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.FAILED);
@@ -50,20 +49,21 @@ public abstract class AbstractExportJobService {
     String lastId = null;
     writeHeaderToFile();
     boolean keepSearching = true;
-    boolean resultsProcessed = false;
+    long resultsProcessed = 0L;
     var targetFields = targetFields();
     while (keepSearching) {
       var searchResult = elasticSearchRepository.getTargetObjects(jobRequest.searchParams(),
           jobRequest.targetType(), lastId, targetFields);
-      if (searchResult.isEmpty()){
+      if (searchResult.isEmpty()) {
         keepSearching = false;
       } else {
         writeResultsToFile(searchResult);
         lastId = searchResult.getLast().get(ID_FIELD).asText();
-        resultsProcessed = true;
+        resultsProcessed += searchResult.size();
       }
     }
-    return resultsProcessed;
+    log.info("Processed {} search results", resultsProcessed);
+    return resultsProcessed > 0;
   }
 
   protected abstract void writeHeaderToFile() throws IOException;
