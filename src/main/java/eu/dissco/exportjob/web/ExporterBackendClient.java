@@ -49,7 +49,7 @@ public class ExporterBackendClient {
     try {
       webClient
           .method(HttpMethod.POST)
-          .uri(uriBuilder -> uriBuilder.path("/complete").build())
+          .uri(uriBuilder -> uriBuilder.path("/completed").build())
           .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
           .body(BodyInserters.fromValue(body))
           .retrieve()

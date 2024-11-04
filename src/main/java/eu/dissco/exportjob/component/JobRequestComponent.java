@@ -3,6 +3,7 @@ package eu.dissco.exportjob.component;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.domain.SearchParam;
+import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.JobProperties;
 import eu.dissco.exportjob.web.ExporterBackendClient;
@@ -29,9 +30,8 @@ public class JobRequestComponent {
     for (int i = 0; i < properties.getInputFields().size(); i++) {
       searchParams.add(new SearchParam(properties.getInputFields().get(i), properties.getInputValues().get(i)));
     }
-    log.info("Received {} job request with id {} and {} search parameters", properties.getTargetType(), properties.getJobId(),
-        searchParams);
-    return new JobRequest(searchParams, properties.getTargetType(), properties.getJobId());
+    log.info("Received job request with id {} and {} search parameters", properties.getJobId(), searchParams);
+    return new JobRequest(searchParams, TargetType.fromString(properties.getTargetType()), properties.getJobId());
   }
 
 }

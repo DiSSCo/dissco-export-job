@@ -1,7 +1,6 @@
 package eu.dissco.exportjob.properties;
 
-import eu.dissco.exportjob.domain.TargetType;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
 import lombok.Data;
@@ -13,19 +12,20 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "job")
 public class JobProperties {
-  @NotBlank
+
+  @NotNull
   @Value("#{'${job.input-fields}'.split(',')}")
   List<String> inputFields;
 
-  @NotBlank
+  @NotNull
   @Value("#{'${job.input-values}'.split(',')}")
   List<String> inputValues;
 
-  @NotBlank
+  @NotNull
   @Value("${job.target-type}")
-  TargetType targetType;
+  String targetType;
 
-  @NotBlank
+  @NotNull
   @Value("${job.id}")
   UUID jobId;
 

@@ -47,7 +47,7 @@ class JobRequestComponentTest {
     properties.setInputFields(List.of(ORG_FIELD_NAME, ORG_FIELD_NAME));
     properties.setJobId(JOB_ID);
     properties.setInputValues(List.of(ORG_1, ORG_2));
-    properties.setTargetType(TargetType.DIGITAL_SPECIMEN);
+    properties.setTargetType(TargetType.DIGITAL_SPECIMEN.getName());
 
     // When
     var result = jobRequestComponent.getJobRequest();
@@ -62,7 +62,7 @@ class JobRequestComponentTest {
     properties.setInputFields(List.of(ORG_FIELD_NAME));
     properties.setJobId(JOB_ID);
     properties.setInputValues(List.of(ORG_1, ORG_2));
-    properties.setTargetType(TargetType.DIGITAL_SPECIMEN);
+    properties.setTargetType(TargetType.DIGITAL_SPECIMEN.getName());
 
     // When
     assertThrows(FailedProcessingException.class, () -> jobRequestComponent.getJobRequest());

@@ -15,4 +15,7 @@ public class S3Properties {
 
   @NotBlank
   private String accessSecret;
+
+  @NotBlank
+  private String bucketName;
 }
