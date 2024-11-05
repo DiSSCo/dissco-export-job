@@ -1,5 +1,6 @@
 package eu.dissco.exportjob.repository;
 
+import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.S3Properties;
 import java.io.File;
 import java.time.Instant;
@@ -20,7 +21,7 @@ public class S3Repository {
   private final DateTimeFormatter formatter;
   private final S3Properties properties;
 
-  public String uploadResults(File file, UUID jobId) {
+  public String uploadResults(File file, UUID jobId) throws FailedProcessingException {
     log.info("Uploading results to S3");
     var key = getDate() + "/" + jobId.toString();
     try (var transferManager = S3TransferManager.builder().s3Client(s3Client).build()) {
@@ -31,14 +32,18 @@ public class S3Repository {
                   .key(key))
               .source(file));
       upload.completionFuture().join();
+      log.info("Successfully uploaded results to S3");
+      var url = s3Client.utilities().getUrl(
+              builder -> builder
+                  .bucket(properties.getBucketName())
+                  .key(key))
+          .toString();
+      s3Client.close();
+      return url;
+    } catch (Exception e){
+      log.error("An error has occurred", e);
+      throw new FailedProcessingException();
     }
-    var url = s3Client.utilities().getUrl(
-            builder -> builder
-                .bucket(properties.getBucketName())
-                .key(key))
-        .toString();
-    s3Client.close();
-    return url;
   }
 
   private String getDate() {
