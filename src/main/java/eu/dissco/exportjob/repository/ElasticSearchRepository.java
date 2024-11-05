@@ -72,6 +72,7 @@ public class ElasticSearchRepository {
           .replace("$", "")
           .replace("[", "")
           .replace("]", ".")
+          .replace("\"", "")
           + "keyword";
       var val = searchParam.inputValue();
       if (val == null || val.isEmpty()) {

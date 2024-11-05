@@ -1,17 +1,14 @@
 package eu.dissco.exportjob.repository;
 
-import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.exceptions.S3UploadException;
 import eu.dissco.exportjob.properties.S3Properties;
 import java.io.File;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
-import java.util.concurrent.CompletionException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
@@ -46,9 +43,6 @@ public class S3Repository {
     }
     catch (Exception e){
       log.error("An error has occurred of type {}", e.getClass(), e);
-      if (e instanceof SdkClientException ex){
-        log.error("Additional information {}", ex.getMessage());
-      }
       throw new S3UploadException();
     }
   }
