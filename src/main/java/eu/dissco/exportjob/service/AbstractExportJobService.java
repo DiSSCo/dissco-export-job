@@ -34,7 +34,7 @@ public abstract class AbstractExportJobService {
       var uploadData = processSearchResults(jobRequest);
       if (uploadData) {
         var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()), jobRequest.jobId());
-        log.info("Successfully posted results to s3 at url {}", url);
+        log.info("S3 results available at {}", url);
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), url);
       } else {
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), null);
