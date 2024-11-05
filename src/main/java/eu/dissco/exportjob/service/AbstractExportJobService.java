@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
+import eu.dissco.exportjob.exceptions.S3UploadException;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
@@ -40,7 +41,7 @@ public abstract class AbstractExportJobService {
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), null);
       }
       log.info("Successfully completed job {}", jobRequest.jobId());
-    } catch (IOException e) {
+    } catch (IOException | S3UploadException e) {
       log.error("An error has occurred", e);
       exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.FAILED);
     }
