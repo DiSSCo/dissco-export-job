@@ -3,6 +3,7 @@ package eu.dissco.exportjob.service;
 import static eu.dissco.exportjob.Profiles.DOI_LIST;
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
+import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static org.mockito.ArgumentMatchers.any;
@@ -10,6 +11,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
+import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
@@ -33,10 +35,12 @@ class DoiListServiceTest {
   private ExporterBackendClient exporterBackendClient;
   @Mock
   private S3Repository s3Repository;
+  @Mock
+  private IndexProperties indexProperties;
 
   @BeforeEach
   void init() {
-    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository);
+    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties);
   }
 
   @Test
@@ -44,6 +48,8 @@ class DoiListServiceTest {
     // Given
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of());
+    given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
+
     // When
     service.handleMessage(givenJobRequest());
 
@@ -59,6 +65,7 @@ class DoiListServiceTest {
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of(givenDigitalSpecimen()));
     given(s3Repository.uploadResults(any(), eq(JOB_ID))).willReturn(DOWNLOAD_LINK);
+    given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
 
     // When
     service.handleMessage(givenJobRequest());

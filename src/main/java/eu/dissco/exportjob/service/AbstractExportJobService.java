@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
+import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
@@ -22,7 +23,7 @@ public abstract class AbstractExportJobService {
   private final ElasticSearchRepository elasticSearchRepository;
   private final ExporterBackendClient exporterBackendClient;
   private final S3Repository s3Repository;
-  protected static final String TEMP_FILE_NAME = "src/main/resources/tmp.csv.gz";
+  protected final IndexProperties indexProperties;
   protected static final String ID_FIELD = "ods:ID";
   protected static final String PHYSICAL_ID_FIELD = "ods:physicalSpecimenID";
 
@@ -32,7 +33,7 @@ public abstract class AbstractExportJobService {
     try {
       var uploadData = processSearchResults(jobRequest);
       if (uploadData) {
-        var url = s3Repository.uploadResults(new File(TEMP_FILE_NAME), jobRequest.jobId());
+        var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()), jobRequest.jobId());
         log.info("Successfully posted results to s3 at url {}", url);
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), url);
       } else {
