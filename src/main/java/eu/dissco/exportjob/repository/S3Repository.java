@@ -22,7 +22,7 @@ public class S3Repository {
 
   public String uploadResults(File file, UUID jobId) {
     log.info("Uploading results to S3");
-    var key = getDate() +"/" + jobId.toString();
+    var key = getDate() + "/" + jobId.toString();
     try (var transferManager = S3TransferManager.builder().s3Client(s3Client).build()) {
       var upload = transferManager
           .uploadFile(uploadFileRequest -> uploadFileRequest
@@ -31,12 +31,14 @@ public class S3Repository {
                   .key(key))
               .source(file));
       upload.completionFuture().join();
-      return s3Client.utilities().getUrl(
-              builder -> builder
-                  .bucket(properties.getBucketName())
-                  .key(key))
-          .toString();
     }
+    var url = s3Client.utilities().getUrl(
+            builder -> builder
+                .bucket(properties.getBucketName())
+                .key(key))
+        .toString();
+    s3Client.close();
+    return url;
   }
 
   private String getDate() {
