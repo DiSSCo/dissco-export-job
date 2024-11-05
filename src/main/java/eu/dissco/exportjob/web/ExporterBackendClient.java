@@ -55,7 +55,7 @@ public class ExporterBackendClient {
           .retrieve()
           .toBodilessEntity().toFuture().get();
     } catch (ExecutionException  e) {
-      log.error("Unable to notify exporter backend that job {} is complete", jobId);
+      log.error("Unable to notify exporter backend that job {} is complete", jobId, e);
     } catch (InterruptedException e){
       Thread.currentThread().interrupt();
       log.error("Thread has been interrupted", e);
