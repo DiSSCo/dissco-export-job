@@ -35,7 +35,7 @@
     <elasticsearch.version>8.15.0</elasticsearch.version>
     <jakarta.json.version>2.1.3</jakarta.json.version>
     <opencsv.version>5.9</opencsv.version>
-    <amazon.awssdk.version>2.25.60</amazon.awssdk.version>
+    <amazon.awssdk.version>2.29.6</amazon.awssdk.version>
     <sonar.organization>dissco</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     <sonar.coverage.jacoco.xmlReportPaths>../app-it/target/site/jacoco-aggregate/jacoco.xml
