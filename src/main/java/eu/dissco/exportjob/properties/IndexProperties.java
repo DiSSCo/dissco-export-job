@@ -13,4 +13,7 @@ public class IndexProperties {
   @NotBlank
   String tempFileLocation;
 
+  @NotBlank
+  String tempFileLocationZip = tempFileLocation + ".gz";
+
 }

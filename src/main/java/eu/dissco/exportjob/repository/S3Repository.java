@@ -29,7 +29,8 @@ public class S3Repository {
           .uploadFile(uploadFileRequest -> uploadFileRequest
               .putObjectRequest(putObjectRequest -> putObjectRequest
                   .bucket(properties.getBucketName())
-                  .key(key))
+                  .key(key)
+                  .contentEncoding("gzip"))
               .source(file));
       upload.completionFuture().join();
       log.info("Successfully uploaded results to S3");

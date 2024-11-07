@@ -10,8 +10,12 @@ import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +38,7 @@ public abstract class AbstractExportJobService {
     try {
       var uploadData = processSearchResults(jobRequest);
       if (uploadData) {
-        var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()), jobRequest.jobId());
+        var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocationZip()), jobRequest.jobId());
         log.info("S3 results available at {}", url);
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), url);
       } else {
@@ -47,7 +51,7 @@ public abstract class AbstractExportJobService {
     }
   }
 
-  private boolean processSearchResults(JobRequest jobRequest) throws IOException {
+  private boolean processSearchResults(JobRequest jobRequest) throws IOException, FailedProcessingException {
     String lastId = null;
     writeHeaderToFile();
     boolean keepSearching = true;
@@ -65,7 +69,24 @@ public abstract class AbstractExportJobService {
       }
     }
     log.info("Processed {} search results", resultsProcessed);
+    compressFile();
     return resultsProcessed > 0;
+  }
+
+  private void compressFile() throws IOException, FailedProcessingException {
+    try (var fileInputStream = new FileInputStream(indexProperties.getTempFileLocation());
+        var fileOutputStream = new FileOutputStream(indexProperties.getTempFileLocationZip());
+        var gzipOutputStream = new GZIPOutputStream(fileOutputStream)) {
+      byte[] buffer = new byte[1024];
+      int len;
+      while ((len = fileInputStream.read(buffer)) > 0) {
+        gzipOutputStream.write(buffer, 0, len);
+      }
+    } catch (FileNotFoundException e){
+      log.error("Unable to write to file", e);
+      throw new FailedProcessingException();
+    }
+
   }
 
   protected abstract void writeHeaderToFile() throws IOException;
