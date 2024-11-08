@@ -32,6 +32,7 @@ public class DoiListService extends AbstractExportJobService {
         var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation());
         var gzip = new GZIPOutputStream(byteOutputStream)) {
       gzip.write(HEADER, 0, HEADER.length);
+      gzip.flush();
     }
   }
 
@@ -44,6 +45,7 @@ public class DoiListService extends AbstractExportJobService {
             .getBytes(StandardCharsets.UTF_8);
         gzip.write(col, 0, col.length);
       }
+      gzip.flush();
     }
   }
 

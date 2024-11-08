@@ -29,6 +29,7 @@ public class TestUtils {
   public static final String PHYS_ID_FIELD = "ods:physicalSpecimenID";
   public static final String TEMP_FILE_NAME = "src/main/resources/tmp.csv.gz";
 
+
   public static JobRequest givenJobRequest() {
     return new JobRequest(
         givenSearchParams(),
