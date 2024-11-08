@@ -4,7 +4,6 @@ import static eu.dissco.exportjob.Profiles.DOI_LIST;
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
-import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME_ZIP;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +49,6 @@ class DoiListServiceTest {
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of());
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
-    given(indexProperties.getTempFileLocationZip()).willReturn(TEMP_FILE_NAME_ZIP);
 
     // When
     service.handleMessage(givenJobRequest());
@@ -68,7 +66,6 @@ class DoiListServiceTest {
         List.of(givenDigitalSpecimen()));
     given(s3Repository.uploadResults(any(), eq(JOB_ID))).willReturn(DOWNLOAD_LINK);
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
-    given(indexProperties.getTempFileLocationZip()).willReturn(TEMP_FILE_NAME_ZIP);
 
     // When
     service.handleMessage(givenJobRequest());

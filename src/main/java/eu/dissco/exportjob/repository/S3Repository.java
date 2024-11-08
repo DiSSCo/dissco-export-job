@@ -23,14 +23,15 @@ public class S3Repository {
 
   public String uploadResults(File file, UUID jobId) throws S3UploadException {
     log.info("Uploading results to S3");
-    var key = getDate() + "/" + jobId.toString();
+    var key = getDate() + "/" + jobId + ".csv.gz";
     try (var transferManager = S3TransferManager.builder().s3Client(s3Client).build()) {
       var upload = transferManager
           .uploadFile(uploadFileRequest -> uploadFileRequest
               .putObjectRequest(putObjectRequest -> putObjectRequest
                   .bucket(properties.getBucketName())
                   .key(key)
-                  .contentEncoding("gzip"))
+                  .contentEncoding("gzip")
+                  .contentType("application/csv"))
               .source(file));
       upload.completionFuture().join();
       log.info("Successfully uploaded results to S3");

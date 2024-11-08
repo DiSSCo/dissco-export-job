@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,19 +28,24 @@ public class DoiListService extends AbstractExportJobService {
   }
 
   protected void writeHeaderToFile() throws IOException {
-    try (var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation(), false)) {
-      byteOutputStream.write(HEADER, 0, HEADER.length);
+    try (
+        var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation());
+        var gzip = new GZIPOutputStream(byteOutputStream)) {
+      gzip.write(HEADER, 0, HEADER.length);
+      gzip.flush();
     }
   }
 
   protected void writeResultsToFile(List<JsonNode> searchResults) throws IOException {
     try (
-        var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation(), true)) {
+        var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation(), true);
+        var gzip = new GZIPOutputStream(byteOutputStream)) {
       for (var result : searchResults) {
         var col = ("\n" + result.get(ID_FIELD).asText() + "," + result.get(PHYSICAL_ID_FIELD).asText())
             .getBytes(StandardCharsets.UTF_8);
-        byteOutputStream.write(col, 0, col.length);
+        gzip.write(col, 0, col.length);
       }
+      gzip.flush();
     }
   }
 
