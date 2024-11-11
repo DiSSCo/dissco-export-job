@@ -30,7 +30,6 @@ public class S3Repository {
               .putObjectRequest(putObjectRequest -> putObjectRequest
                   .bucket(properties.getBucketName())
                   .key(key)
-                  .contentEncoding("gzip")
                   .contentType("application/csv"))
               .source(file));
       upload.completionFuture().join();
