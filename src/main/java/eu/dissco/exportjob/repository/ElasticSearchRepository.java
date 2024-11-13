@@ -25,7 +25,7 @@ public class ElasticSearchRepository {
 
   private final ElasticsearchClient client;
   private final ElasticSearchProperties properties;
-  private static final String SORT_BY = "ods:ID.keyword";
+  private static final String SORT_BY = "dcterms:identifier.keyword";
 
   public List<JsonNode> getTargetObjects(List<SearchParam> searchParams, TargetType targetType,
       String lastId, List<String> targetFields)

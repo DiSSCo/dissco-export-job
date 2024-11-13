@@ -34,7 +34,7 @@ public abstract class AbstractExportJobService {
   private final ExporterBackendClient exporterBackendClient;
   private final S3Repository s3Repository;
   protected final IndexProperties indexProperties;
-  protected static final String ID_FIELD = "ods:ID";
+  protected static final String ID_FIELD = "dcterms:identifier";
   protected static final String PHYSICAL_ID_FIELD = "ods:physicalSpecimenID";
 
 
