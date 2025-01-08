@@ -54,6 +54,7 @@ class DoiListServiceTest {
     service.handleMessage(givenJobRequest());
 
     // Then
+    then(elasticSearchRepository).should().shutdown();
     then(elasticSearchRepository).shouldHaveNoMoreInteractions();
     then(s3Repository).shouldHaveNoInteractions();
     then(exporterBackendClient).should().markJobAsComplete(JOB_ID, null);
@@ -71,6 +72,7 @@ class DoiListServiceTest {
     service.handleMessage(givenJobRequest());
 
     // Then
+    then(elasticSearchRepository).should().shutdown();
     then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
   }
 

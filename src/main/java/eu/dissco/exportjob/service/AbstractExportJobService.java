@@ -73,6 +73,7 @@ public abstract class AbstractExportJobService {
         resultsProcessed += searchResult.size();
       }
     }
+    elasticSearchRepository.shutdown();
     log.info("Processed {} search results", resultsProcessed);
     return resultsProcessed > 0;
   }

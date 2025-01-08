@@ -27,6 +27,5 @@ public class ProjectRunner implements CommandLineRunner {
       log.error("An error has occurred", e);
     }
     context.close();
-    System.exit(0);
   }
 }

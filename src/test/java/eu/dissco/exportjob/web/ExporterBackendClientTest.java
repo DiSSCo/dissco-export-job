@@ -97,7 +97,7 @@ class ExporterBackendClientTest {
         .setResponseCode(HttpStatus.BAD_GATEWAY.value()));
 
     // When / Then
-    assertDoesNotThrow(() -> exporterBackendClient.markJobAsComplete(JOB_ID, DOWNLOAD_LINK));
+    assertThrows(FailedProcessingException.class, () -> exporterBackendClient.markJobAsComplete(JOB_ID, DOWNLOAD_LINK));
   }
 
   @Test
