@@ -50,7 +50,6 @@ public class ElasticSearchRepository {
               .filter(filter -> filter.includes(targetFields)));
     }
     var searchResult = client.search(searchRequestBuilder.build(), ObjectNode.class);
-
     return searchResult.hits().hits().stream()
         .map(Hit::source)
         .filter(Objects::nonNull)
@@ -61,6 +60,10 @@ public class ElasticSearchRepository {
   private String getIndex(TargetType targetType) {
     return targetType == TargetType.DIGITAL_SPECIMEN ? properties.getDigitalSpecimenIndex()
         : properties.getDigitalMediaObjectIndex();
+  }
+
+  public void shutdown() throws IOException{
+    client._transport().close();
   }
 
   private static List<Query> generateQuery(List<SearchParam> searchParams) {

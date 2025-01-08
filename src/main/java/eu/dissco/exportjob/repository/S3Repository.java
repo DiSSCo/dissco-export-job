@@ -44,6 +44,7 @@ public class S3Repository {
     }
     catch (Exception e){
       log.error("An error has occurred of type {}", e.getClass(), e);
+      s3Client.close();
       throw new S3UploadException();
     }
   }
