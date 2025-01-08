@@ -60,7 +60,6 @@ public class ElasticSearchRepository {
   private String getIndex(TargetType targetType) {
     return targetType == TargetType.DIGITAL_SPECIMEN ? properties.getDigitalSpecimenIndex()
         : properties.getDigitalMediaObjectIndex();
-
   }
 
   public void shutdown() throws IOException{
