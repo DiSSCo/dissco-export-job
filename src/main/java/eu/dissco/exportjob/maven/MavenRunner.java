@@ -46,6 +46,8 @@ public class MavenRunner {
       while ((line = reader.readLine()) != null) {
         result.append(line).append("\n");
       }
+    } finally {
+      conn.disconnect();
     }
     return result.toString();
   }

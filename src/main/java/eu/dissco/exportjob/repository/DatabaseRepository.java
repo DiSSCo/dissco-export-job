@@ -18,17 +18,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 @RequiredArgsConstructor
 public class DatabaseRepository {
+
   private final Field<String> uniqueIDField = DSL.field("id", String.class);
   private final Field<byte[]> dataField = DSL.field("data", byte[].class);
 
   private final DSLContext context;
 
   public void createTable(String tableName) {
+    dropTable(tableName);
     context.createTable(tableName)
         .column(uniqueIDField)
         .column(dataField)
         .execute();
-
     context.createUniqueIndex().on(tableName, "id").execute();
   }
 
@@ -47,13 +48,14 @@ public class DatabaseRepository {
 
   private Query createQuery(String tableName, Pair<String, Object> stringObjectPair)
       throws IOException {
-      var baos = new ByteArrayOutputStream();
-      var out = new ObjectOutputStream(baos);
+    try (var baos = new ByteArrayOutputStream();
+        var out = new ObjectOutputStream(baos)) {
       out.writeObject(stringObjectPair.getRight());
       return context.insertInto(DSL.table("\"" + tableName + "\""))
           .columns(uniqueIDField, dataField)
           .values(stringObjectPair.getLeft(), baos.toByteArray())
           .onConflictDoNothing();
+    }
   }
 
   public List<byte[]> getRecords(String tableName, int start, int limit) {

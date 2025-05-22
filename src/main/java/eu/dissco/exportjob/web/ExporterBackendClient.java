@@ -25,44 +25,44 @@ public class ExporterBackendClient {
 
   public void updateJobState(UUID jobId, JobStateEndpoint stateEndpoint)
       throws FailedProcessingException {
-    var endpoint = stateEndpoint.getEndpoint();
-    try {
-      webClient
-          .method(HttpMethod.POST)
-          .uri(uriBuilder -> uriBuilder.path("/" + jobId.toString() + endpoint).build())
-          .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
-          .retrieve()
-          .toBodilessEntity().toFuture().get();
-    } catch (ExecutionException e) {
-      log.error("Unable to notify exporter backend that job {} is {}", jobId,
-          endpoint.replace("/", ""));
-    } catch (InterruptedException e) {
-      log.error("Thread has been interrupted", e);
-      Thread.currentThread().interrupt();
-      throw new FailedProcessingException();
-    }
+//    var endpoint = stateEndpoint.getEndpoint();
+//    try {
+//      webClient
+//          .method(HttpMethod.POST)
+//          .uri(uriBuilder -> uriBuilder.path("/" + jobId.toString() + endpoint).build())
+//          .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
+//          .retrieve()
+//          .toBodilessEntity().toFuture().get();
+//    } catch (ExecutionException e) {
+//      log.error("Unable to notify exporter backend that job {} is {}", jobId,
+//          endpoint.replace("/", ""));
+//    } catch (InterruptedException e) {
+//      log.error("Thread has been interrupted", e);
+//      Thread.currentThread().interrupt();
+//      throw new FailedProcessingException();
+//    }
   }
 
   public void markJobAsComplete(UUID jobId, String downloadLink) throws FailedProcessingException {
-    var body = mapper.createObjectNode()
-        .put("id", jobId.toString())
-        .put("downloadLink", downloadLink);
-    try {
-      webClient
-          .method(HttpMethod.POST)
-          .uri(uriBuilder -> uriBuilder.path("/completed").build())
-          .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
-          .body(BodyInserters.fromValue(body))
-          .retrieve()
-          .toBodilessEntity().toFuture().get();
-    } catch (ExecutionException e) {
-      log.error("Unable to notify exporter backend that job {} is complete", jobId, e);
-      throw new FailedProcessingException();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      log.error("Thread has been interrupted", e);
-      throw new FailedProcessingException();
-    }
+//    var body = mapper.createObjectNode()
+//        .put("id", jobId.toString())
+//        .put("downloadLink", downloadLink);
+//    try {
+//      webClient
+//          .method(HttpMethod.POST)
+//          .uri(uriBuilder -> uriBuilder.path("/completed").build())
+//          .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
+//          .body(BodyInserters.fromValue(body))
+//          .retrieve()
+//          .toBodilessEntity().toFuture().get();
+//    } catch (ExecutionException e) {
+//      log.error("Unable to notify exporter backend that job {} is complete", jobId, e);
+//      throw new FailedProcessingException();
+//    } catch (InterruptedException e) {
+//      Thread.currentThread().interrupt();
+//      log.error("Thread has been interrupted", e);
+//      throw new FailedProcessingException();
+//    }
   }
 
 }
