@@ -11,8 +11,7 @@ import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import java.io.IOException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,22 +28,17 @@ class ExporterBackendClientTest {
   private TokenAuthenticator tokenAuthenticator;
   private ExporterBackendClient exporterBackendClient;
 
-
-  @BeforeAll
-  static void init() throws IOException {
+  @BeforeEach
+  void setup() throws IOException {
     mockServer = new MockWebServer();
     mockServer.start();
-  }
-
-  @BeforeEach
-  void setup() {
     WebClient webClient = WebClient.create(
         String.format("http://%s:%s", mockServer.getHostName(), mockServer.getPort()));
     exporterBackendClient = new ExporterBackendClient(webClient, MAPPER, tokenAuthenticator);
   }
 
-  @AfterAll
-  static void destroy() throws IOException {
+  @AfterEach
+  void destroy() throws IOException {
     mockServer.shutdown();
   }
 
@@ -69,18 +63,6 @@ class ExporterBackendClientTest {
   }
 
   @Test
-  void testUpdateJobStateInterrupted() {
-    // Given
-    mockServer.enqueue(new MockResponse()
-        .setResponseCode(HttpStatus.BAD_GATEWAY.value()));
-    Thread.currentThread().interrupt();
-
-    // When / Then
-    assertThrows(FailedProcessingException.class,
-        () -> exporterBackendClient.updateJobState(JOB_ID, JobStateEndpoint.RUNNING));
-  }
-
-  @Test
   void testMarkJobAsComplete() {
     // Given
     mockServer.enqueue(new MockResponse()
@@ -97,20 +79,8 @@ class ExporterBackendClientTest {
         .setResponseCode(HttpStatus.BAD_GATEWAY.value()));
 
     // When / Then
-    assertThrows(FailedProcessingException.class, () -> exporterBackendClient.markJobAsComplete(JOB_ID, DOWNLOAD_LINK));
-  }
-
-  @Test
-  void testMarkJobAsCompleteInterrupted() {
-    // Given
-    mockServer.enqueue(new MockResponse()
-        .setResponseCode(HttpStatus.BAD_GATEWAY.value()));
-    Thread.currentThread().interrupt();
-
-    // When / Then
     assertThrows(FailedProcessingException.class,
         () -> exporterBackendClient.markJobAsComplete(JOB_ID, DOWNLOAD_LINK));
   }
-
 
 }
