@@ -217,7 +217,8 @@ public class DwcDpService extends AbstractExportJobService {
     mapMediaToDwcDp(results, mediaSearchResult);
   }
 
-  private void pushResultToTempTables(Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+  private void pushResultToTempTables(Map<DwcDpClasses, List<Pair<String, Object>>> results)
+      throws IOException {
     log.info("Pushing results to temp tables");
     for (Entry<DwcDpClasses, List<Pair<String, Object>>> dwcDpClassesListEntry : results.entrySet()) {
       var tableName = getTempTableName(dwcDpClassesListEntry.getKey());
