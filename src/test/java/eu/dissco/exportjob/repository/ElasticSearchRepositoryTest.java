@@ -40,7 +40,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @Testcontainers
-public class ElasticSearchRepositoryTest {
+class ElasticSearchRepositoryTest {
 
   private static final DockerImageName ELASTIC_IMAGE = DockerImageName.parse(
       "docker.elastic.co/elasticsearch/elasticsearch").withTag("8.7.1");
@@ -82,7 +82,7 @@ public class ElasticSearchRepositoryTest {
   }
 
   @AfterAll
-  public static void closeResources() throws Exception {
+  static void closeResources() throws Exception {
     restClient.close();
   }
 

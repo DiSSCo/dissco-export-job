@@ -23,7 +23,8 @@ public class ExporterBackendClient {
   private final ObjectMapper mapper;
   private final TokenAuthenticator tokenAuthenticator;
 
-  public void updateJobState(UUID jobId, JobStateEndpoint stateEndpoint) throws FailedProcessingException {
+  public void updateJobState(UUID jobId, JobStateEndpoint stateEndpoint)
+      throws FailedProcessingException {
     var endpoint = stateEndpoint.getEndpoint();
     try {
       webClient
@@ -54,10 +55,10 @@ public class ExporterBackendClient {
           .body(BodyInserters.fromValue(body))
           .retrieve()
           .toBodilessEntity().toFuture().get();
-    } catch (ExecutionException  e) {
+    } catch (ExecutionException e) {
       log.error("Unable to notify exporter backend that job {} is complete", jobId, e);
       throw new FailedProcessingException();
-    } catch (InterruptedException e){
+    } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       log.error("Thread has been interrupted", e);
       throw new FailedProcessingException();

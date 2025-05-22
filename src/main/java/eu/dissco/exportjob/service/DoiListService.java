@@ -2,18 +2,22 @@ package eu.dissco.exportjob.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
+import jakarta.validation.constraints.Size;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @Profile(Profiles.DOI_LIST)
 public class DoiListService extends AbstractExportJobService {
@@ -27,6 +31,11 @@ public class DoiListService extends AbstractExportJobService {
     super(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties);
   }
 
+  @Override
+  protected void postProcessResults() {
+    log.debug("This method is not required for DwC-DP exports");
+  }
+
   protected void writeHeaderToFile() throws IOException {
     try (
         var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation());
@@ -34,6 +43,13 @@ public class DoiListService extends AbstractExportJobService {
       gzip.write(HEADER, 0, HEADER.length);
       gzip.flush();
     }
+  }
+
+  protected void processSearchResults(List<JsonNode> searchResults) throws IOException {
+    if (searchResults.isEmpty()) {
+      return;
+    }
+    writeResultsToFile(searchResults);
   }
 
   protected void writeResultsToFile(List<JsonNode> searchResults) throws IOException {

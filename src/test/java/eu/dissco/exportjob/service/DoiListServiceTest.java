@@ -62,7 +62,7 @@ class DoiListServiceTest {
 
   @Test
   void testHandleMessage() throws Exception {
-    // GIven
+    // Given
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of(givenDigitalSpecimen()));
     given(s3Repository.uploadResults(any(), eq(JOB_ID))).willReturn(DOWNLOAD_LINK);
@@ -75,6 +75,5 @@ class DoiListServiceTest {
     then(elasticSearchRepository).should().shutdown();
     then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
   }
-
 
 }

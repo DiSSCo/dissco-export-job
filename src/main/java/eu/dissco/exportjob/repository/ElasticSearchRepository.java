@@ -23,48 +23,9 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ElasticSearchRepository {
 
+  private static final String SORT_BY = "dcterms:identifier.keyword";
   private final ElasticsearchClient client;
   private final ElasticSearchProperties properties;
-  private static final String SORT_BY = "dcterms:identifier.keyword";
-
-  public List<JsonNode> getTargetObjects(List<SearchParam> searchParams, TargetType targetType,
-      String lastId, List<String> targetFields)
-      throws IOException {
-    var query = generateQuery(searchParams);
-    var index = getIndex(targetType);
-
-    var searchRequestBuilder = new SearchRequest.Builder()
-        .index(index)
-        .query(
-            q -> q.bool(b -> b.must(query)))
-        .trackTotalHits(t -> t.enabled(Boolean.TRUE))
-        .size(properties.getPageSize())
-        .sort(s -> s.field(f -> f.field(SORT_BY).order(SortOrder.Desc)));
-    if (lastId != null) {
-      searchRequestBuilder
-          .searchAfter(sa -> sa.stringValue(lastId));
-    }
-    if (targetFields != null) {
-      searchRequestBuilder
-          .source(sourceConfig -> sourceConfig
-              .filter(filter -> filter.includes(targetFields)));
-    }
-    var searchResult = client.search(searchRequestBuilder.build(), ObjectNode.class);
-    return searchResult.hits().hits().stream()
-        .map(Hit::source)
-        .filter(Objects::nonNull)
-        .map(JsonNode.class::cast)
-        .toList();
-  }
-
-  private String getIndex(TargetType targetType) {
-    return targetType == TargetType.DIGITAL_SPECIMEN ? properties.getDigitalSpecimenIndex()
-        : properties.getDigitalMediaObjectIndex();
-  }
-
-  public void shutdown() throws IOException{
-    client._transport().close();
-  }
 
   private static List<Query> generateQuery(List<SearchParam> searchParams) {
     var qList = new ArrayList<Query>();
@@ -87,6 +48,61 @@ public class ElasticSearchRepository {
       }
     }
     return qList;
+  }
+
+  public List<JsonNode> getTargetObjects(List<SearchParam> searchParams, TargetType targetType,
+      String lastId, List<String> targetFields)
+      throws IOException {
+    var query = generateQuery(searchParams);
+    var index = getIndex(targetType);
+
+    return retrieveObjects(lastId, properties.getPageSize(), targetFields, index, query);
+  }
+
+  public List<JsonNode> getTargetForMediaList(List<String> mediaList) throws IOException {
+    var queries = mediaList.stream().map(media -> new Query.Builder()
+        .ids(id -> id.values(mediaList))
+        .build()).toList();
+    var index = properties.getDigitalMediaObjectIndex();
+    return retrieveObjects(null, null, null, index, queries);
+  }
+
+  private List<JsonNode> retrieveObjects(String lastId, Integer pageSize, List<String> targetFields,
+      String index, List<Query> query) throws IOException {
+    var searchRequestBuilder = new SearchRequest.Builder()
+        .index(index)
+        .query(
+            q -> q.bool(b -> b.must(query)))
+        .trackTotalHits(t -> t.enabled(Boolean.TRUE))
+        .size(properties.getPageSize())
+        .sort(s -> s.field(f -> f.field(SORT_BY).order(SortOrder.Desc)));
+    if (pageSize != null) {
+      searchRequestBuilder.size(pageSize);
+    }
+    if (lastId != null) {
+      searchRequestBuilder
+          .searchAfter(sa -> sa.stringValue(lastId));
+    }
+    if (targetFields != null) {
+      searchRequestBuilder
+          .source(sourceConfig -> sourceConfig
+              .filter(filter -> filter.includes(targetFields)));
+    }
+    var searchResult = client.search(searchRequestBuilder.build(), ObjectNode.class);
+    return searchResult.hits().hits().stream()
+        .map(Hit::source)
+        .filter(Objects::nonNull)
+        .map(JsonNode.class::cast)
+        .toList();
+  }
+
+  private String getIndex(TargetType targetType) {
+    return targetType == TargetType.DIGITAL_SPECIMEN ? properties.getDigitalSpecimenIndex()
+        : properties.getDigitalMediaObjectIndex();
+  }
+
+  public void shutdown() throws IOException {
+    client._transport().close();
   }
 
 }

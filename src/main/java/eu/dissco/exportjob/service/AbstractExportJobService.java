@@ -9,18 +9,9 @@ import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +21,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public abstract class AbstractExportJobService {
 
-  private final ElasticSearchRepository elasticSearchRepository;
+  protected final ElasticSearchRepository elasticSearchRepository;
   private final ExporterBackendClient exporterBackendClient;
   private final S3Repository s3Repository;
   protected final IndexProperties indexProperties;
@@ -39,9 +30,11 @@ public abstract class AbstractExportJobService {
 
 
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
-    exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING);
+
     try {
-      var uploadData = processSearchResults(jobRequest);
+      exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING);
+      var uploadData = processRequest(jobRequest);
+      postProcessResults();
       if (uploadData) {
         var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()), jobRequest.jobId());
         log.info("S3 results available at {}", url);
@@ -50,25 +43,26 @@ public abstract class AbstractExportJobService {
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), null);
       }
       log.info("Successfully completed job {}", jobRequest.jobId());
-    } catch (IOException | S3UploadException e) {
+    } catch (IOException | S3UploadException | FailedProcessingException e) {
       log.error("An error has occurred", e);
       exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.FAILED);
     }
   }
 
-  private boolean processSearchResults(JobRequest jobRequest) throws IOException {
+  protected boolean processRequest(JobRequest jobRequest) throws IOException {
     String lastId = null;
     writeHeaderToFile();
     boolean keepSearching = true;
     long resultsProcessed = 0L;
     var targetFields = targetFields();
     while (keepSearching) {
+      log.info("Paginating over elastic, resultsProcessed: {}", resultsProcessed);
       var searchResult = elasticSearchRepository.getTargetObjects(jobRequest.searchParams(),
           jobRequest.targetType(), lastId, targetFields);
       if (searchResult.isEmpty()) {
         keepSearching = false;
       } else {
-        writeResultsToFile(searchResult);
+        processSearchResults(searchResult);
         lastId = searchResult.getLast().get(ID_FIELD).asText();
         resultsProcessed += searchResult.size();
       }
@@ -80,7 +74,11 @@ public abstract class AbstractExportJobService {
 
   protected abstract void writeHeaderToFile() throws IOException;
 
-  protected abstract void writeResultsToFile(List<JsonNode> searchResult) throws IOException;
+  protected abstract void postProcessResults() throws IOException, FailedProcessingException;
+
+  protected abstract void processSearchResults(List<JsonNode> searchResults) throws IOException;
+
+  protected abstract void writeResultsToFile(List<JsonNode> searchResults) throws IOException;
 
   protected abstract List<String> targetFields();
 
