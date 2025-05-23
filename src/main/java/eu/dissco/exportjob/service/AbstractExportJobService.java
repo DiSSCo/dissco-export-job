@@ -30,7 +30,6 @@ public abstract class AbstractExportJobService {
 
 
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
-
     try {
       exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING);
       var uploadData = processRequest(jobRequest);
