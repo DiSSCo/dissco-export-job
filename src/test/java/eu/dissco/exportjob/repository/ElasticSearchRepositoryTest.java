@@ -7,6 +7,7 @@ import static eu.dissco.exportjob.utils.TestUtils.ORG_2;
 import static eu.dissco.exportjob.utils.TestUtils.PHYS_ID_2;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimenReducedDoiList;
+import static eu.dissco.exportjob.utils.TestUtils.givenMediaJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenSearchParams;
 import static eu.dissco.exportjob.utils.TestUtils.givenTargetFields;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +23,7 @@ import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.properties.ElasticSearchProperties;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -48,12 +50,12 @@ class ElasticSearchRepositoryTest {
   private static final String ELASTICSEARCH_PASSWORD = "s3cret";
   private static final ElasticsearchContainer container = new ElasticsearchContainer(
       ELASTIC_IMAGE).withPassword(ELASTICSEARCH_PASSWORD);
+  private static final String DIGITAL_SPECIMEN_INDEX = "digital-specimen";
+  private static final String DIGITAL_MEDIA_INDEX = "digital-media";
   private static ElasticsearchClient client;
   private static RestClient restClient;
   private final ElasticSearchProperties properties = new ElasticSearchProperties();
   private ElasticSearchRepository elasticRepository;
-  private static final String DIGITAL_SPECIMEN_INDEX = "digital-specimen";
-  private static final String DIGITAL_MEDIA_INDEX = "digital-media";
 
   @BeforeAll
   static void initContainer() {
@@ -105,6 +107,7 @@ class ElasticSearchRepositoryTest {
   void testGetTargetObject() throws IOException {
     // Given
     postDigitalSpecimens(
+        DIGITAL_SPECIMEN_INDEX,
         List.of(givenDigitalSpecimen(), givenDigitalSpecimen(DOI_2, ORG_2, PHYS_ID_2)));
 
     // When
@@ -119,6 +122,7 @@ class ElasticSearchRepositoryTest {
   void testGetTargetObjectSecondPage() throws IOException {
     // Given
     postDigitalSpecimens(
+        DIGITAL_SPECIMEN_INDEX,
         List.of(givenDigitalSpecimen(), givenDigitalSpecimen(DOI_2, ORG_1, PHYS_ID_2)));
 
     // When
@@ -135,24 +139,46 @@ class ElasticSearchRepositoryTest {
     var expected = ((ObjectNode) (givenDigitalSpecimen("doi.org/1", ORG_2, PHYS_ID_2)));
     expected.remove("ods:organisationID");
     postDigitalSpecimens(
+        DIGITAL_SPECIMEN_INDEX,
         List.of(givenDigitalSpecimen(), givenDigitalSpecimen(DOI_2, ORG_2, PHYS_ID_2), expected));
     var searchParam = List.of(new SearchParam("$['ods:organisationID']", null));
 
     // When
-    var result = elasticRepository.getTargetObjects(searchParam, TargetType.DIGITAL_SPECIMEN, null, null);
+    var result = elasticRepository.getTargetObjects(searchParam, TargetType.DIGITAL_SPECIMEN, null,
+        null);
 
     // Then
     assertThat(result).isEqualTo(List.of(expected));
   }
 
-  private void postDigitalSpecimens(List<JsonNode> digitalSpecimens) throws IOException {
+  @Test
+  void testGetTargetForMediaList() throws IOException {
+    // Given
+    var mediaList = new ArrayList<JsonNode>();
+    for (int i = 0; i < 10; i++) {
+      var jsonNode = givenMediaJson();
+      ((ObjectNode) jsonNode).put("@id", "https://doi.org/TEST/WVW-SCM-C9" + i);
+      mediaList.add(jsonNode);
+    }
+    postDigitalSpecimens(DIGITAL_MEDIA_INDEX, mediaList);
+
+    // When
+    var result = elasticRepository.getTargetForMediaList(
+        mediaList.stream().map(node -> node.get("@id").asText()).toList());
+
+    // Then
+    assertThat(result).isEqualTo(mediaList);
+  }
+
+  private void postDigitalSpecimens(String indexName, List<JsonNode> jsonObjects)
+      throws IOException {
     var bulkRequest = new BulkRequest.Builder();
-    for (var digitalSpecimen : digitalSpecimens) {
+    for (var jsonObject : jsonObjects) {
       bulkRequest.operations(op -> op.index(
-          idx -> idx.index(DIGITAL_SPECIMEN_INDEX).id(digitalSpecimen.get("@id").asText())
-              .document(digitalSpecimen)));
+          idx -> idx.index(indexName).id(jsonObject.get("@id").asText())
+              .document(jsonObject)));
     }
     client.bulk(bulkRequest.build());
-    client.indices().refresh(b -> b.index(DIGITAL_SPECIMEN_INDEX));
+    client.indices().refresh(b -> b.index(indexName));
   }
 }

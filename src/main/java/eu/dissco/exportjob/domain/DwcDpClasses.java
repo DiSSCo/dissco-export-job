@@ -16,7 +16,7 @@ public enum DwcDpClasses {
   MEDIA("media.csv", "media", DwcDpMedia.class),
   OCCURRENCE("occurrence.csv", "occurrence", DwcDpOccurrence.class),
   RELATIONSHIP("relationship.csv", "relationship", DwcDpRelationship.class),
-  IDENTIFICATION_TAXON("identification-taxon.csv", "identification-taxon", DwcDpTaxonIdentification.class),;
+  IDENTIFICATION_TAXON("identification-taxon.csv", "identification-taxon", DwcDpTaxonIdentification.class);
   
   
   private final String fileName;
