@@ -1,0 +1,84 @@
+package eu.dissco.exportjob.domain.dwcdp;
+
+import java.io.Serial;
+import java.io.Serializable;
+import lombok.Data;
+
+@Data
+public class DwcDpEvent implements Serializable {
+
+  @Serial
+  private static final long serialVersionUID = 1L;
+  private String eventID;
+  private String parentEventID;
+  private String preferredEventName;
+  private String eventCategory;
+  private String eventType;
+  private String datasetName;
+  private String datasetID;
+  private String fieldNumber;
+  private String eventConductedBy;
+  private String eventConductedByID;
+  private String eventDate;
+  private String eventTime;
+  private Integer startDayOfYear;
+  private Integer endDayOfYear;
+  private Integer year;
+  private Integer month;
+  private Integer day;
+  private String verbatimEventDate;
+  private String verbatimLocality;
+  private String verbatimElevation;
+  private String verbatimDepth;
+  private String verbatimCoordinates;
+  private String verbatimLatitude;
+  private String verbatimLongitude;
+  private String verbatimCoordinateSystem;
+  private String verbatimSRS;
+  private String georeferenceVerificationStatus;
+  private String habitat;
+  private String eventEffort;
+  private String fieldNotes;
+  private String eventReferences;
+  private String eventRemarks;
+  private String locationID;
+  private String higherGeographyID;
+  private String higherGeography;
+  private String continent;
+  private String waterBody;
+  private String islandGroup;
+  private String island;
+  private String country;
+  private String countryCode;
+  private String stateProvince;
+  private String county;
+  private String municipality;
+  private String locality;
+  private Double minimumElevationInMeters;
+  private Double maximumElevationInMeters;
+  private String verticalDatum;
+  private Double minimumDepthInMeters;
+  private Double maximumDepthInMeters;
+  private Double minimumDistanceAboveSurfaceInMeters;
+  private Double maximumDistanceAboveSurfaceInMeters;
+  private String locationRemarks;
+  private Double decimalLatitude;
+  private Double decimalLongitude;
+  private String geodeticDatum;
+  private Integer coordinateUncertaintyInMeters;
+  private Double coordinatePrecision;
+  private Double pointRadiusSpatialFit;
+  private String footprintWKT;
+  private String footprintSRS;
+  private Double footprintSpatialFit;
+  private String georeferencedBy;
+  private String georeferencedByID;
+  private String georeferencedDate;
+  private String georeferenceProtocol;
+  private String georeferenceProtocolID;
+  private String georeferenceSources;
+  private String georeferenceRemarks;
+  private String informationWithheld;
+  private String dataGeneralizations;
+  private String preferredSpatialRepresentation;
+}

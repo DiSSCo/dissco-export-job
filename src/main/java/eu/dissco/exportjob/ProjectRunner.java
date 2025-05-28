@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class ProjectRunner implements CommandLineRunner {
 
   private final AbstractExportJobService exportJobService;
+
   private final ConfigurableApplicationContext context;
   private final JobRequestComponent jobRequestComponent;
 
@@ -23,9 +24,11 @@ public class ProjectRunner implements CommandLineRunner {
     try {
       var request = jobRequestComponent.getJobRequest();
       exportJobService.handleMessage(request);
-    } catch (FailedProcessingException e){
-      log.error("An error has occurred", e);
+    } catch (FailedProcessingException e) {
+      log.error("Fatal exception occurred", e);
+    } finally {
+      log.info("Shutting down application");
+      context.close();
     }
-    context.close();
   }
 }
