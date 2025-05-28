@@ -1,4 +1,4 @@
-package eu.dissco.exportjob.domain;
+package eu.dissco.exportjob.domain.dwcdp;
 
 import java.io.Serial;
 import java.io.Serializable;

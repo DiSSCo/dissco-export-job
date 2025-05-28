@@ -1,5 +1,6 @@
 package eu.dissco.exportjob.repository;
 
+import eu.dissco.exportjob.Profiles;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -12,10 +13,12 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Query;
 import org.jooq.impl.DSL;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository
+@Profile(Profiles.DWC_DP)
 @RequiredArgsConstructor
 public class DatabaseRepository {
 

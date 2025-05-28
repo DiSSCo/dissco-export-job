@@ -59,9 +59,9 @@ public class ElasticSearchRepository {
     return retrieveObjects(lastId, properties.getPageSize(), targetFields, index, query);
   }
 
-  public List<JsonNode> getTargetForMediaList(List<String> mediaList) throws IOException {
-    var queries = mediaList.stream().map(media -> new Query.Builder()
-        .ids(id -> id.values(mediaList))
+  public List<JsonNode> getTargetMediaById(List<String> mediaIds) throws IOException {
+    var queries = mediaIds.stream().map(media -> new Query.Builder()
+        .ids(id -> id.values(mediaIds))
         .build()).toList();
     var index = properties.getDigitalMediaObjectIndex();
     return retrieveObjects(null, null, null, index, queries);

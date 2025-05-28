@@ -163,7 +163,7 @@ class ElasticSearchRepositoryTest {
     postDigitalSpecimens(DIGITAL_MEDIA_INDEX, mediaList);
 
     // When
-    var result = elasticRepository.getTargetForMediaList(
+    var result = elasticRepository.getTargetMediaById(
         mediaList.stream().map(node -> node.get("@id").asText()).toList());
 
     // Then

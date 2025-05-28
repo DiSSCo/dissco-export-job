@@ -1,18 +1,18 @@
 package eu.dissco.exportjob.service;
 
-import static eu.dissco.exportjob.domain.DwcDpClasses.AGENT;
-import static eu.dissco.exportjob.domain.DwcDpClasses.AGENT_IDENTIFIER;
-import static eu.dissco.exportjob.domain.DwcDpClasses.EVENT;
-import static eu.dissco.exportjob.domain.DwcDpClasses.EVENT_AGENT;
-import static eu.dissco.exportjob.domain.DwcDpClasses.IDENTIFICATION;
-import static eu.dissco.exportjob.domain.DwcDpClasses.IDENTIFICATION_AGENT;
-import static eu.dissco.exportjob.domain.DwcDpClasses.IDENTIFICATION_TAXON;
-import static eu.dissco.exportjob.domain.DwcDpClasses.MATERIAL;
-import static eu.dissco.exportjob.domain.DwcDpClasses.MATERIAL_IDENTIFIER;
-import static eu.dissco.exportjob.domain.DwcDpClasses.MATERIAL_MEDIA;
-import static eu.dissco.exportjob.domain.DwcDpClasses.MEDIA;
-import static eu.dissco.exportjob.domain.DwcDpClasses.OCCURRENCE;
-import static eu.dissco.exportjob.domain.DwcDpClasses.RELATIONSHIP;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.AGENT;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.AGENT_IDENTIFIER;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.EVENT;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.EVENT_AGENT;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.IDENTIFICATION;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.IDENTIFICATION_AGENT;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.IDENTIFICATION_TAXON;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_IDENTIFIER;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_MEDIA;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MEDIA;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.OCCURRENCE;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.RELATIONSHIP;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,20 +20,20 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import eu.dissco.exportjob.Profiles;
-import eu.dissco.exportjob.domain.DwCDPMaterial;
-import eu.dissco.exportjob.domain.DwcDpEvent;
-import eu.dissco.exportjob.domain.DwcDpAgent;
-import eu.dissco.exportjob.domain.DwcDpAgentIdentifier;
-import eu.dissco.exportjob.domain.DwcDpClasses;
-import eu.dissco.exportjob.domain.DwcDpEventAgent;
-import eu.dissco.exportjob.domain.DwcDpIdentification;
-import eu.dissco.exportjob.domain.DwcDpIdentificationAgent;
-import eu.dissco.exportjob.domain.DwcDpMaterialIdentifier;
-import eu.dissco.exportjob.domain.DwcDpMaterialMedia;
-import eu.dissco.exportjob.domain.DwcDpMedia;
-import eu.dissco.exportjob.domain.DwcDpOccurrence;
-import eu.dissco.exportjob.domain.DwcDpRelationship;
-import eu.dissco.exportjob.domain.DwcDpTaxonIdentification;
+import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpAgentIdentifier;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpEvent;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpEventAgent;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpIdentification;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpIdentificationAgent;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialIdentifier;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialMedia;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMedia;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpOccurrence;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpRelationship;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpTaxonIdentification;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.DwcDpProperties;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -65,7 +65,6 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
@@ -84,7 +83,8 @@ public class DwcDpService extends AbstractExportJobService {
   public DwcDpService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
       S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
-      DatabaseRepository databaseRepository, JobProperties jobProperties, DwcDpProperties dwcDpProperties) {
+      DatabaseRepository databaseRepository, JobProperties jobProperties,
+      DwcDpProperties dwcDpProperties) {
     super(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties);
     this.objectMapper = objectMapper;
     this.databaseRepository = databaseRepository;
@@ -113,7 +113,8 @@ public class DwcDpService extends AbstractExportJobService {
   private static void writeRecordsToFile(DwcDpClasses value, List<byte[]> records, FileSystem fs)
       throws IOException, ClassNotFoundException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
     var path = fs.getPath(value.getFileName());
-    try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+    try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
+        StandardOpenOption.CREATE,
         StandardOpenOption.APPEND)) {
       var csvWriter = new StatefulBeanToCsvBuilder<>(writer).build();
       for (byte[] byteArray : records) {
@@ -198,7 +199,7 @@ public class DwcDpService extends AbstractExportJobService {
 
   @Override
   protected void processSearchResults(List<JsonNode> searchResult) throws IOException {
-    Map<DwcDpClasses, List<Pair<String, Object>>> results = getTableMap();
+    var results = getTableMap();
     mapSpecimenToDwcDp(results, searchResult);
     addMediaToDwcDp(results);
     pushResultToTempTables(results);
@@ -213,14 +214,14 @@ public class DwcDpService extends AbstractExportJobService {
     if (mediaList.isEmpty()) {
       return;
     }
-    var mediaSearchResult = elasticSearchRepository.getTargetForMediaList(mediaList);
+    var mediaSearchResult = elasticSearchRepository.getTargetMediaById(mediaList);
     mapMediaToDwcDp(results, mediaSearchResult);
   }
 
   private void pushResultToTempTables(Map<DwcDpClasses, List<Pair<String, Object>>> results)
       throws IOException {
     log.info("Pushing results to temp tables");
-    for (Entry<DwcDpClasses, List<Pair<String, Object>>> dwcDpClassesListEntry : results.entrySet()) {
+    for (var dwcDpClassesListEntry : results.entrySet()) {
       var tableName = getTempTableName(dwcDpClassesListEntry.getKey());
       if (!dwcDpClassesListEntry.getValue().isEmpty()) {
         databaseRepository.insertRecords(tableName, dwcDpClassesListEntry.getValue());
@@ -246,7 +247,6 @@ public class DwcDpService extends AbstractExportJobService {
               var eventId = mapEvent(digitalSpecimen, results);
               mapMaterial(digitalSpecimen, results, eventId);
               mapIdentifiers(digitalSpecimen, results);
-
               mapOccurrence(digitalSpecimen, results);
               mapIdentification(digitalSpecimen, results);
               mapRelationships(digitalSpecimen, results);
@@ -300,12 +300,16 @@ public class DwcDpService extends AbstractExportJobService {
       relationship.setRelationshipType(odsHasEntityRelationship.getDwcRelationshipOfResource());
       relationship.setRelatedResourceID(
           odsHasEntityRelationship.getOdsRelatedResourceURI().toString());
-      relationship.setRelationshipAccordingToID(
-          odsHasEntityRelationship.getOdsHasAgents().get(0).getId());
-      relationship.setRelationshipAccordingTo(
-          odsHasEntityRelationship.getOdsHasAgents().get(0).getSchemaName());
-      relationship.setRelationshipEffectiveDate(
-          odsHasEntityRelationship.getDwcRelationshipEstablishedDate().toString());
+      if (!odsHasEntityRelationship.getOdsHasAgents().isEmpty()) {
+        relationship.setRelationshipAccordingToID(
+            odsHasEntityRelationship.getOdsHasAgents().getFirst().getId());
+        relationship.setRelationshipAccordingTo(
+            odsHasEntityRelationship.getOdsHasAgents().getFirst().getSchemaName());
+      }
+      if (odsHasEntityRelationship.getDwcRelationshipEstablishedDate() != null) {
+        relationship.setRelationshipEffectiveDate(
+            odsHasEntityRelationship.getDwcRelationshipEstablishedDate().toString());
+      }
       if (relationship.getRelationshipID() == null) {
         relationship.setRelationshipID(Integer.toString(relationship.hashCode()));
       }
@@ -317,6 +321,7 @@ public class DwcDpService extends AbstractExportJobService {
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
     for (var odsHasIdentification : digitalSpecimen.getOdsHasIdentifications()) {
       var identification = new DwcDpIdentification();
+      identification.setIdentificationID(odsHasIdentification.getId());
       identification.setBasedOnMaterialEntityID(digitalSpecimen.getId());
       identification.setIdentificationType("MaterialEntity");
       identification.setVerbatimIdentification(odsHasIdentification.getDwcVerbatimIdentification());
@@ -341,7 +346,9 @@ public class DwcDpService extends AbstractExportJobService {
     for (var taxonAgent : odsHasIdentification.getOdsHasAgents()) {
       var agent = new DwcDpAgent();
       agent.setAgentID(taxonAgent.getId());
-      agent.setAgentType(taxonAgent.getType().toString());
+      if (taxonAgent.getType() != null) {
+        agent.setAgentType(taxonAgent.getType().toString());
+      }
       agent.setAgentTypeVocabulary("https://schema.org/agent");
       agent.setPreferredAgentName(taxonAgent.getSchemaName());
       if (agent.getAgentID() == null) {
@@ -396,7 +403,7 @@ public class DwcDpService extends AbstractExportJobService {
 
   private void mapMaterial(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results, String eventId) {
-    var material = new DwCDPMaterial();
+    var material = new DwCDpMaterial();
     material.setMaterialEntityID(digitalSpecimen.getId());
     material.setEventID(eventId);
     material.setInstitutionID(digitalSpecimen.getOdsOrganisationID());
@@ -543,7 +550,9 @@ public class DwcDpService extends AbstractExportJobService {
     for (var agent : event.getOdsHasAgents()) {
       var eventAgent = new DwcDpAgent();
       eventAgent.setAgentID(agent.getId());
-      eventAgent.setAgentType(agent.getType().toString());
+      if (agent.getType() != null) {
+        eventAgent.setAgentType(agent.getType().toString());
+      }
       eventAgent.setAgentTypeVocabulary("https://schema.org/agent");
       eventAgent.setPreferredAgentName(agent.getSchemaName());
       if (eventAgent.getAgentID() == null) {
@@ -551,6 +560,7 @@ public class DwcDpService extends AbstractExportJobService {
       }
       results.get(AGENT).add(Pair.of(eventAgent.getAgentID(), eventAgent));
       mapEventAgentRole(agent, eventId, eventAgent.getAgentID(), results);
+      mapAgentIdentifier(agent, eventAgent.getAgentID(), results);
     }
   }
 

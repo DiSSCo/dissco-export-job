@@ -1,16 +1,16 @@
-package eu.dissco.exportjob.domain;
+package eu.dissco.exportjob.domain.dwcdp;
 
 import lombok.Getter;
 
 @Getter
 public enum DwcDpClasses {
   AGENT("agent.csv", "agent", DwcDpAgent.class),
-  AGENT_IDENTIFIER("agent-identification.csv", "agent-identification", DwcDpAgentIdentifier.class),
+  AGENT_IDENTIFIER("agent-identifier.csv", "agent-identifier", DwcDpAgentIdentifier.class),
   EVENT("event.csv", "event", DwcDpEvent.class),
   EVENT_AGENT("event-agent.csv", "event-agent", DwcDpEventAgent.class),
   IDENTIFICATION("identification.csv", "identification", DwcDpIdentification.class),
   IDENTIFICATION_AGENT("identification-agent.csv", "identification-agent", DwcDpIdentificationAgent.class),
-  MATERIAL("material.csv", "material", DwCDPMaterial.class),
+  MATERIAL("material.csv", "material", DwCDpMaterial.class),
   MATERIAL_IDENTIFIER("material-identifier.csv", "material-identifier", DwcDpMaterialIdentifier.class),
   MATERIAL_MEDIA("material-media.csv", "material-media", DwcDpMaterialMedia.class),
   MEDIA("media.csv", "media", DwcDpMedia.class),
