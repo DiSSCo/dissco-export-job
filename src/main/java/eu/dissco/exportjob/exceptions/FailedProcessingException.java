@@ -9,4 +9,8 @@ public class FailedProcessingException extends Exception {
     super(s);
   }
 
+  public FailedProcessingException(String s, Exception e){
+    super(s, e);
+  }
+
 }
