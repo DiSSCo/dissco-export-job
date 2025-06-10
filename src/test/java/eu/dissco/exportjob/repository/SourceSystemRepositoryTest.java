@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
-import org.assertj.core.api.Fail;
 import org.jooq.JSONB;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -24,6 +24,11 @@ class SourceSystemRepositoryTest extends BaseRepositoryIT {
   @BeforeEach
   void setUp() {
     repository = new SourceSystemRepository(context);
+  }
+
+  @AfterEach
+  void cleanup() {
+    context.truncate(SOURCE_SYSTEM).execute();
   }
 
   @Test
@@ -40,12 +45,13 @@ class SourceSystemRepositoryTest extends BaseRepositoryIT {
   }
 
   @Test
-  void testNoEmlFileForSourceSystem(){
+  void testNoEmlFileForSourceSystem() {
     // Given
     givenInsertRecords(null);
 
     // When
-    assertThrows(FailedProcessingException.class, () -> repository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID));
+    assertThrows(FailedProcessingException.class,
+        () -> repository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID));
   }
 
   private void givenInsertRecords(byte[] eml) {
