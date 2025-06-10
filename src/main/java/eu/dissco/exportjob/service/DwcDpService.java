@@ -20,6 +20,7 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgentIdentifier;
@@ -41,6 +42,7 @@ import eu.dissco.exportjob.properties.JobProperties;
 import eu.dissco.exportjob.repository.DatabaseRepository;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
+import eu.dissco.exportjob.repository.SourceSystemRepository;
 import eu.dissco.exportjob.schema.Agent;
 import eu.dissco.exportjob.schema.DigitalMedia;
 import eu.dissco.exportjob.schema.DigitalSpecimen;
@@ -68,6 +70,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -79,17 +82,20 @@ public class DwcDpService extends AbstractExportJobService {
   private final DatabaseRepository databaseRepository;
   private final JobProperties jobProperties;
   private final DwcDpProperties dwcDpProperties;
+  private final SourceSystemRepository sourceSystemRepository;
 
   public DwcDpService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
       S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
       DatabaseRepository databaseRepository, JobProperties jobProperties,
-      DwcDpProperties dwcDpProperties) {
-    super(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties);
+      DwcDpProperties dwcDpProperties, Environment environment, SourceSystemRepository sourceSystemRepository) {
+    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
+        environment);
     this.objectMapper = objectMapper;
     this.databaseRepository = databaseRepository;
     this.jobProperties = jobProperties;
     this.dwcDpProperties = dwcDpProperties;
+    this.sourceSystemRepository = sourceSystemRepository;
   }
 
   private static Map<DwcDpClasses, List<Pair<String, Object>>> getTableMap() {
@@ -150,9 +156,12 @@ public class DwcDpService extends AbstractExportJobService {
   }
 
   @Override
-  protected void postProcessResults() throws FailedProcessingException {
+  protected void postProcessResults(JobRequest jobRequest) throws FailedProcessingException {
     var zipFile = new File(indexProperties.getTempFileLocation());
     try (var fs = FileSystems.newFileSystem(zipFile.toPath(), Map.of("create", "true"))) {
+      if (Boolean.TRUE.equals(jobRequest.isSourceSystemJob())) {
+        writeEmlFile(jobRequest, fs);
+      }
       for (DwcDpClasses value : DwcDpClasses.values()) {
         postProcessDwcDpClass(value, fs);
       }
@@ -160,6 +169,21 @@ public class DwcDpService extends AbstractExportJobService {
       log.error("Failed to create zip file", ex);
       throw new FailedProcessingException("Unable to create zip file");
     }
+  }
+
+  private void writeEmlFile(JobRequest jobRequest, FileSystem fs)
+      throws FailedProcessingException, IOException {
+    var sourceSystemOptional = jobRequest.searchParams().stream()
+        .filter(param -> param.inputField().equals("ods:sourceSystemID."))
+        .findFirst();
+    if (sourceSystemOptional.isEmpty()){
+      throw new FailedProcessingException("Is a source system job, but no sourceSystemID provided");
+    }
+    var sourceSystemId = sourceSystemOptional.get().inputValue();
+    log.info("Retrieving EML for source system ID: {}", sourceSystemId);
+    var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
+    var sourceSystemFile = fs.getPath("eml.xml");
+    Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
   }
 
   private void postProcessDwcDpClass(DwcDpClasses value, FileSystem fs)

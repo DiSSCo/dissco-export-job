@@ -28,20 +28,34 @@ public class TestUtils {
   public static final String ORG_FIELD_NAME = "$['ods:organisationID']";
   public static final String ID_FIELD = "dcterms:identifier";
   public static final String PHYS_ID_FIELD = "ods:physicalSpecimenID";
+  public static final String SOURCE_SYSTEM_ID = "https://hdl.handle.net/TEST/Z1M-8WG-DCD";
   public static final String TEMP_FILE_NAME = "src/main/resources/tmp.zip";
 
 
   public static JobRequest givenJobRequest() {
+    return givenJobRequest(Boolean.FALSE);
+  }
+
+  public static JobRequest givenJobRequest(Boolean isSourceSystemJob) {
     return new JobRequest(
         givenSearchParams(),
         TargetType.DIGITAL_SPECIMEN,
-        JOB_ID
+        JOB_ID,
+        isSourceSystemJob
+    );
+  }
+
+  public static JobRequest givenSourceSystemRequest() {
+    return new JobRequest(
+        List.of(new SearchParam("ods:sourceSystemID.", SOURCE_SYSTEM_ID)),
+        TargetType.DIGITAL_SPECIMEN,
+        JOB_ID,
+        Boolean.TRUE
     );
   }
 
   public static List<SearchParam> givenSearchParams() {
-    return List.of(new SearchParam(
-        ORG_FIELD_NAME, ORG_1));
+    return List.of(new SearchParam(ORG_FIELD_NAME, ORG_1));
   }
 
   public static JsonNode givenDigitalSpecimen(){
