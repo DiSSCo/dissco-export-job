@@ -88,7 +88,8 @@ public class DwcDpService extends AbstractExportJobService {
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
       S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
       DatabaseRepository databaseRepository, JobProperties jobProperties,
-      DwcDpProperties dwcDpProperties, Environment environment, SourceSystemRepository sourceSystemRepository) {
+      DwcDpProperties dwcDpProperties, Environment environment,
+      SourceSystemRepository sourceSystemRepository) {
     super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
         environment);
     this.objectMapper = objectMapper;
@@ -176,8 +177,9 @@ public class DwcDpService extends AbstractExportJobService {
     var sourceSystemOptional = jobRequest.searchParams().stream()
         .filter(param -> param.inputField().equals("ods:sourceSystemID."))
         .findFirst();
-    if (sourceSystemOptional.isEmpty()){
-      throw new FailedProcessingException("Is a source system job, but no sourceSystemID provided");
+    if (sourceSystemOptional.isEmpty()) {
+      throw new FailedProcessingException(
+          "Is a source system job, but no sourceSystemID provided: " + jobRequest.jobId());
     }
     var sourceSystemId = sourceSystemOptional.get().inputValue();
     log.info("Retrieving EML for source system ID: {}", sourceSystemId);
