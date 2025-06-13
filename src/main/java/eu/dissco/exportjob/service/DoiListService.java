@@ -7,7 +7,6 @@ import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
-import jakarta.validation.constraints.Size;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.zip.GZIPOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -27,12 +27,12 @@ public class DoiListService extends AbstractExportJobService {
 
   public DoiListService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
-      S3Repository s3Repository, IndexProperties indexProperties) {
-    super(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties);
+      S3Repository s3Repository, IndexProperties indexProperties, Environment environment) {
+    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository, environment);
   }
 
   @Override
-  protected void postProcessResults() {
+  protected void postProcessResults(JobRequest jobRequest) {
     log.debug("This method is not required for DwC-DP exports");
   }
 

@@ -22,11 +22,12 @@ public class JobProperties {
   List<String> inputValues;
 
   @NotNull
-  @Value("${job.target-type}")
   String targetType;
 
   @NotNull
-  @Value("${job.id}")
   UUID jobId;
+
+  @NotNull
+  Boolean isSourceSystemJob;
 
 }

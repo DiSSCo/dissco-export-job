@@ -6,7 +6,8 @@ import java.util.UUID;
 public record JobRequest(
     List<SearchParam> searchParams,
     TargetType targetType,
-    UUID jobId
+    UUID jobId,
+    Boolean isSourceSystemJob
 ) {
 
 }

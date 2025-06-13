@@ -21,9 +21,9 @@ public class S3Repository {
   private final DateTimeFormatter formatter;
   private final S3Properties properties;
 
-  public String uploadResults(File file, UUID jobId) throws S3UploadException {
+  public String uploadResults(File file, UUID jobId, String fileExtension) throws S3UploadException {
     log.info("Uploading results to S3");
-    var key = getDate() + "/" + jobId + ".csv.gz";
+    var key = getDate() + "/" + jobId + fileExtension;
     try (var transferManager = S3TransferManager.builder().s3Client(s3Client).build()) {
       var upload = transferManager
           .uploadFile(uploadFileRequest -> uploadFileRequest

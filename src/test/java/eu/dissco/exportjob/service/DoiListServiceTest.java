@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 import org.springframework.test.context.ActiveProfiles;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,10 +38,12 @@ class DoiListServiceTest {
   private S3Repository s3Repository;
   @Mock
   private IndexProperties indexProperties;
+  @Mock
+  private Environment environment;
 
   @BeforeEach
   void init() {
-    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties);
+    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties, environment);
   }
 
   @Test
@@ -65,7 +68,8 @@ class DoiListServiceTest {
     // Given
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of(givenDigitalSpecimen()));
-    given(s3Repository.uploadResults(any(), eq(JOB_ID))).willReturn(DOWNLOAD_LINK);
+    given(environment.getActiveProfiles()).willReturn(new String[]{"doi_list"});
+    given(s3Repository.uploadResults(any(), eq(JOB_ID), eq(".csv.gz"))).willReturn(DOWNLOAD_LINK);
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
 
     // When

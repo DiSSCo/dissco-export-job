@@ -31,7 +31,7 @@ public class JobRequestComponent {
       searchParams.add(new SearchParam(properties.getInputFields().get(i), properties.getInputValues().get(i)));
     }
     log.info("Received job request with id {} and {} search parameters", properties.getJobId(), searchParams);
-    return new JobRequest(searchParams, TargetType.fromString(properties.getTargetType()), properties.getJobId());
+    return new JobRequest(searchParams, TargetType.fromString(properties.getTargetType()), properties.getJobId(), properties.getIsSourceSystemJob());
   }
 
 }
