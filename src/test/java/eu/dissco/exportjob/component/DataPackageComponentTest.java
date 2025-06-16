@@ -1,11 +1,11 @@
 package eu.dissco.exportjob.component;
 
+import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
-import eu.dissco.exportjob.utils.TestUtils;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import java.io.File;
@@ -23,16 +23,15 @@ import org.springframework.core.io.ClassPathResource;
 class DataPackageComponentTest {
 
   private final Configuration configuration = new Configuration(Configuration.VERSION_2_3_32);
-  private Template template;
   private final XMLInputFactory factory = XMLInputFactory.newFactory();
-
+  private Template template;
   private DataPackageComponent dataPackageComponent;
 
   @BeforeEach
   void setUp() throws IOException {
     configuration.setDirectoryForTemplateLoading(new File("src/main/resources/templates/"));
     template = configuration.getTemplate("data-package.ftl");
-    this.dataPackageComponent = new DataPackageComponent(template, factory);
+    this.dataPackageComponent = new DataPackageComponent(template, factory, MAPPER);
   }
 
   @Test
@@ -46,7 +45,7 @@ class DataPackageComponentTest {
         DwcDpClasses.MATERIAL_MEDIA, DwcDpClasses.MEDIA));
 
     // Then
-    var datapackageNode = TestUtils.MAPPER.readTree(result);
+    var datapackageNode = MAPPER.readTree(result);
     assertThat(datapackageNode.get("title").asText()).isEqualTo(
         "Naturalis Biodiversity Center (NL) - Tunicata");
     assertThat(datapackageNode.get("licenses").get(0).get("title").asText())
@@ -61,9 +60,9 @@ class DataPackageComponentTest {
 
     // When
     assertThrows(FailedProcessingException.class,
-    () -> dataPackageComponent.formatDataPackage(eml, Set.of(
-        DwcDpClasses.OCCURRENCE, DwcDpClasses.AGENT, DwcDpClasses.MATERIAL, DwcDpClasses.EVENT,
-        DwcDpClasses.MATERIAL_MEDIA, DwcDpClasses.MEDIA)));
+        () -> dataPackageComponent.formatDataPackage(eml, Set.of(
+            DwcDpClasses.OCCURRENCE, DwcDpClasses.AGENT, DwcDpClasses.MATERIAL, DwcDpClasses.EVENT,
+            DwcDpClasses.MATERIAL_MEDIA, DwcDpClasses.MEDIA)));
   }
 
 }

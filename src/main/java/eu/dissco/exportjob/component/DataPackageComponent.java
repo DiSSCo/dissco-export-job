@@ -1,5 +1,6 @@
 package eu.dissco.exportjob.component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
@@ -31,6 +32,7 @@ public class DataPackageComponent {
   @Qualifier("dataPackageTemplate")
   private final Template dataPackageTemplate;
   private final XMLInputFactory xmlFactory;
+  private final ObjectMapper mapper;
 
   private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
       "yyyy-MM-dd'T'HH:mm:ss.SSSXXX").withZone(ZoneOffset.UTC);
@@ -42,7 +44,7 @@ public class DataPackageComponent {
       var templateMap = retrieveTemplateMap(eml, filesContainingRecords);
       var writer = new StringWriter();
       dataPackageTemplate.process(templateMap, writer);
-      return writer.toString();
+      return mapper.readTree(writer.toString()).toPrettyString();
     } catch (XMLStreamException e) {
       throw new FailedProcessingException("Failed to parse EML XML", e);
     } catch (TemplateException | IOException e) {

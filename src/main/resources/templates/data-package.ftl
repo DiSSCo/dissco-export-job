@@ -15,8 +15,18 @@
   "version" : "1",
   "created" : "${created}",
   "resources" : [
-<#if agent??>
+<#if material??>
   {
+  "name" : "material",
+  "profile" : "tabular-data-resource",
+  "format" : "csv",
+  "encoding" : "UTF-8",
+  "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/material.json",
+  "path" : "material.csv"
+  }
+</#if>
+<#if agent??>
+  , {
     "name" : "agent",
     "profile" : "tabular-data-resource",
     "format" : "csv",
@@ -75,16 +85,6 @@
   "path" : "identification-agent-role.csv"
   }
 </#if>
-<#if material??>
-  , {
-    "name" : "material",
-    "profile" : "tabular-data-resource",
-    "format" : "csv",
-    "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/material.json",
-    "path" : "material.csv"
-  }
-</#if>
 <#if material_identifier??>
   , {
     "name" : "material-identifier",
@@ -135,7 +135,7 @@
     "path" : "relationship.csv"
   }
 </#if>
-<#if identification??>
+<#if identification_taxon??>
   , {
   "name" : "identification-taxon",
   "profile" : "tabular-data-resource",
