@@ -42,12 +42,14 @@ class JobRequestComponentTest {
     var expected = new JobRequest(
         List.of(new SearchParam(ORG_FIELD_NAME, ORG_1), new SearchParam(ORG_FIELD_NAME, ORG_2)),
         TargetType.DIGITAL_SPECIMEN,
-        JOB_ID
+        JOB_ID,
+        Boolean.FALSE
     );
     properties.setInputFields(List.of(ORG_FIELD_NAME, ORG_FIELD_NAME));
     properties.setJobId(JOB_ID);
     properties.setInputValues(List.of(ORG_1, ORG_2));
     properties.setTargetType(TargetType.DIGITAL_SPECIMEN.getName());
+    properties.setIsSourceSystemJob(Boolean.FALSE);
 
     // When
     var result = jobRequestComponent.getJobRequest();

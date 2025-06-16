@@ -3,6 +3,7 @@ package eu.dissco.exportjob.repository;
 import static org.testcontainers.containers.PostgreSQLContainer.IMAGE;
 
 import com.zaxxer.hikari.HikariDataSource;
+import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DefaultDSLContext;
@@ -32,6 +33,7 @@ class BaseRepositoryIT {
     dataSource.setPassword(CONTAINER.getPassword());
     dataSource.setMaximumPoolSize(2);
     dataSource.setConnectionInitSql(CONTAINER.getTestQueryString());
+    Flyway.configure().mixed(true).dataSource(dataSource).load().migrate();
     context = new DefaultDSLContext(dataSource, SQLDialect.POSTGRES);
   }
 
