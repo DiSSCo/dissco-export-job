@@ -194,7 +194,8 @@ public class DwcDpService extends AbstractExportJobService {
         .filter(param -> param.inputField().equals("ods:sourceSystemID."))
         .findFirst();
     if (sourceSystemOptional.isEmpty()) {
-      throw new FailedProcessingException("Is a source system job, but no sourceSystemID provided");
+      throw new FailedProcessingException(
+          "Is a source system job, but no sourceSystemID provided: " + jobRequest.jobId());
     }
     var sourceSystemId = sourceSystemOptional.get().inputValue();
     log.info("Retrieving EML for source system ID: {}", sourceSystemId);
