@@ -20,6 +20,7 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.component.DataPackageComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
@@ -65,6 +66,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -83,13 +85,14 @@ public class DwcDpService extends AbstractExportJobService {
   private final JobProperties jobProperties;
   private final DwcDpProperties dwcDpProperties;
   private final SourceSystemRepository sourceSystemRepository;
+  private final DataPackageComponent dataPackageComponent;
 
   public DwcDpService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
       S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
       DatabaseRepository databaseRepository, JobProperties jobProperties,
       DwcDpProperties dwcDpProperties, Environment environment,
-      SourceSystemRepository sourceSystemRepository) {
+      SourceSystemRepository sourceSystemRepository, DataPackageComponent dataPackageComponent) {
     super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
         environment);
     this.objectMapper = objectMapper;
@@ -97,6 +100,7 @@ public class DwcDpService extends AbstractExportJobService {
     this.jobProperties = jobProperties;
     this.dwcDpProperties = dwcDpProperties;
     this.sourceSystemRepository = sourceSystemRepository;
+    this.dataPackageComponent = dataPackageComponent;
   }
 
   private static Map<DwcDpClasses, List<Pair<String, Object>>> getTableMap() {
@@ -160,11 +164,16 @@ public class DwcDpService extends AbstractExportJobService {
   protected void postProcessResults(JobRequest jobRequest) throws FailedProcessingException {
     var zipFile = new File(indexProperties.getTempFileLocation());
     try (var fs = FileSystems.newFileSystem(zipFile.toPath(), Map.of("create", "true"))) {
-      if (Boolean.TRUE.equals(jobRequest.isSourceSystemJob())) {
-        writeEmlFile(jobRequest, fs);
-      }
+      var filesContainingRecords = new HashSet<DwcDpClasses>();
       for (DwcDpClasses value : DwcDpClasses.values()) {
-        postProcessDwcDpClass(value, fs);
+        var containsRecords = postProcessDwcDpClass(value, fs);
+        if (containsRecords) {
+          filesContainingRecords.add(value);
+        }
+      }
+      if (Boolean.TRUE.equals(jobRequest.isSourceSystemJob())) {
+        var eml = writeEmlFile(jobRequest, fs);
+        writeDataPackageFile(eml, fs, filesContainingRecords);
       }
     } catch (IOException ex) {
       log.error("Failed to create zip file", ex);
@@ -172,7 +181,14 @@ public class DwcDpService extends AbstractExportJobService {
     }
   }
 
-  private void writeEmlFile(JobRequest jobRequest, FileSystem fs)
+  private void writeDataPackageFile(String eml, FileSystem fs,
+      HashSet<DwcDpClasses> filesContainingRecords) throws IOException, FailedProcessingException {
+    var dataPackageString = dataPackageComponent.formatDataPackage(eml, filesContainingRecords);
+    var dataPackageFile = fs.getPath("data-package.json");
+    Files.writeString(dataPackageFile, dataPackageString, StandardCharsets.UTF_8);
+  }
+
+  private String writeEmlFile(JobRequest jobRequest, FileSystem fs)
       throws FailedProcessingException, IOException {
     var sourceSystemOptional = jobRequest.searchParams().stream()
         .filter(param -> param.inputField().equals("ods:sourceSystemID."))
@@ -186,12 +202,14 @@ public class DwcDpService extends AbstractExportJobService {
     var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
     var sourceSystemFile = fs.getPath("eml.xml");
     Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
+    return eml;
   }
 
-  private void postProcessDwcDpClass(DwcDpClasses value, FileSystem fs)
+  private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs)
       throws FailedProcessingException {
     int start = 0;
     boolean continueLoop = true;
+    boolean containsRecords = false;
     while (continueLoop) {
       log.info("Retrieving records from table {}, stating at {} with limit {}", value,
           start, dwcDpProperties.getDbPageSize());
@@ -199,6 +217,7 @@ public class DwcDpService extends AbstractExportJobService {
       List<byte[]> records = databaseRepository.getRecords(tableName, start,
           dwcDpProperties.getDbPageSize());
       if (records != null && !records.isEmpty()) {
+        containsRecords = true;
         log.info("Writing {} records to csv: {}", records.size(), value.getFileName());
         try {
           writeRecordsToFile(value, records, fs);
@@ -216,6 +235,7 @@ public class DwcDpService extends AbstractExportJobService {
         continueLoop = false;
       }
     }
+    return containsRecords;
   }
 
   @Override

@@ -10,6 +10,7 @@ import static eu.dissco.exportjob.utils.TestUtils.givenMediaJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenSourceSystemRequest;
 import static eu.dissco.exportjob.utils.TestUtils.givenSpecimenJson;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.times;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import eu.dissco.exportjob.component.DataPackageComponent;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.properties.DwcDpProperties;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -68,6 +70,8 @@ class DwcDpServiceTest {
   private Environment environment;
   @Mock
   private SourceSystemRepository sourceSystemRepository;
+  @Mock
+  private DataPackageComponent dataPackageComponent;
 
   static Stream<JsonNode> jsonProvider() throws JsonProcessingException {
     return Stream.of(givenSpecimenJson(), givenSpecimenJsonOther());
@@ -484,7 +488,7 @@ class DwcDpServiceTest {
   void setup() {
     service = new DwcDpService(elasticSearchRepository, exporterBackendClient, s3Repository,
         indexProperties, MAPPER, databaseRepository, jobProperties, dwcDpProperties, environment,
-        sourceSystemRepository);
+        sourceSystemRepository, dataPackageComponent);
   }
 
   @AfterEach
@@ -528,6 +532,7 @@ class DwcDpServiceTest {
   @Test
   void testHandleMessageIsSourceSystem() throws Exception {
     // Given
+    var eml = "<eml></dataset><dataset><title>Test Dataset</title></dataset></eml>";
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of(givenSpecimenJson()));
     given(environment.getActiveProfiles()).willReturn(new String[]{"dwc_dp"});
@@ -537,8 +542,8 @@ class DwcDpServiceTest {
     given(s3Repository.uploadResults(any(), eq(JOB_ID), eq(".zip"))).willReturn(DOWNLOAD_LINK);
     given(databaseRepository.getRecords(anyString(), eq(0), eq(10))).willReturn(
         List.of());
-    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(
-        "<eml></dataset><dataset><title>Test Dataset</title></dataset></eml>");
+    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(eml);
+    given(dataPackageComponent.formatDataPackage(eq(eml), anySet())).willReturn("{}");
     var dbResponse = new ArrayList<byte[]>();
     for (int i = 0; i < 18; i++) {
       dbResponse.add(HexFormat.of().parseHex(HEX));
