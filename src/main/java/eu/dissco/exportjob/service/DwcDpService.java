@@ -191,7 +191,7 @@ public class DwcDpService extends AbstractExportJobService {
   private String writeEmlFile(JobRequest jobRequest, FileSystem fs)
       throws FailedProcessingException, IOException {
     var sourceSystemOptional = jobRequest.searchParams().stream()
-        .filter(param -> param.inputField().equals("ods:sourceSystemID."))
+        .filter(param -> param.inputField().contains("ods:sourceSystemID"))
         .findFirst();
     if (sourceSystemOptional.isEmpty()) {
       throw new FailedProcessingException(
