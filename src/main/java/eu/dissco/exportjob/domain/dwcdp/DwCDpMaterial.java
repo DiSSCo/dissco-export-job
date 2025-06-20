@@ -10,6 +10,7 @@ public class DwCDpMaterial implements Serializable {
   @Serial
   private static final long serialVersionUID = 1L;
   private String materialEntityID;
+  private String digitalSpecimenID;
   private String eventID;
   private String materialCategory;
   private String materialEntityType;
