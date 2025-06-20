@@ -73,7 +73,10 @@ public class DataPackageComponent {
       HashMap<String, String> templateMap,
       XMLEventReader xmlEventReader) throws XMLStreamException {
     if (isStartElement(element, templateElement)) {
-      templateMap.put(templateElement, xmlEventReader.nextEvent().asCharacters().getData());
+      var nextElement = xmlEventReader.nextEvent();
+      if (nextElement.isCharacters()) {
+        templateMap.put(templateElement, nextElement.asCharacters().getData().trim());
+      }
     }
   }
 

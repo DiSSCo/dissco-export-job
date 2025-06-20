@@ -50,6 +50,7 @@ import eu.dissco.exportjob.schema.DigitalSpecimen;
 import eu.dissco.exportjob.schema.EntityRelationship;
 import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identification;
+import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
 import eu.dissco.exportjob.utils.DwcDpUtils;
 import eu.dissco.exportjob.web.ExporterBackendClient;
@@ -64,6 +65,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -74,6 +77,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 @Slf4j
 @Service
@@ -135,6 +139,42 @@ public class DwcDpService extends AbstractExportJobService {
         csvWriter.write(object);
       }
     }
+  }
+
+  private void mapRelationship(DigitalSpecimen digitalSpecimen,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results,
+      EntityRelationship odsHasEntityRelationship) {
+    var relationship = new DwcDpRelationship();
+    relationship.setRelationshipID(odsHasEntityRelationship.getId());
+    relationship.setSubjectResourceID(digitalSpecimen.getOdsPhysicalSpecimenID());
+    relationship.setSubjectResourceType("MaterialEntity");
+    relationship.setRelationshipType(odsHasEntityRelationship.getDwcRelationshipOfResource());
+    relationship.setRelatedResourceID(
+        odsHasEntityRelationship.getOdsRelatedResourceURI().toString());
+    if (!odsHasEntityRelationship.getOdsHasAgents().isEmpty()) {
+      relationship.setRelationshipAccordingToID(
+          odsHasEntityRelationship.getOdsHasAgents().getFirst().getId());
+      relationship.setRelationshipAccordingTo(
+          odsHasEntityRelationship.getOdsHasAgents().getFirst().getSchemaName());
+    }
+    if (odsHasEntityRelationship.getDwcRelationshipEstablishedDate() != null) {
+      relationship.setRelationshipEffectiveDate(
+          odsHasEntityRelationship.getDwcRelationshipEstablishedDate().toString());
+    }
+    if (relationship.getRelationshipID() == null) {
+      relationship.setRelationshipID(generateHashID(relationship.toString()));
+    }
+    results.get(RELATIONSHIP).add(Pair.of(relationship.getRelationshipID(), relationship));
+  }
+
+  private void mapIdentifier(DigitalSpecimen digitalSpecimen,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results, Identifier identifier) {
+    var dwcDpIdentifier = new DwcDpMaterialIdentifier();
+    dwcDpIdentifier.setIdentifier(identifier.getDctermsIdentifier());
+    dwcDpIdentifier.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
+    dwcDpIdentifier.setIdentifierType(identifier.getDctermsTitle());
+    results.get(MATERIAL_IDENTIFIER)
+        .add(Pair.of(generateHashID(dwcDpIdentifier.toString()), dwcDpIdentifier));
   }
 
   @PostConstruct()
@@ -328,39 +368,23 @@ public class DwcDpService extends AbstractExportJobService {
         .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalMedia")).forEach(
             entityRelationship -> {
               var materialMedia = new DwcDpMaterialMedia();
-              materialMedia.setMaterialEntityID(digitalSpecimen.getId());
+              materialMedia.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
               materialMedia.setMediaID(entityRelationship.getOdsRelatedResourceURI().toString());
               results.get(MATERIAL_MEDIA)
-                  .add(Pair.of(Integer.toString(materialMedia.hashCode()), materialMedia));
+                  .add(Pair.of(generateHashID(materialMedia.toString()), materialMedia));
             }
         );
   }
 
   private void mapRelationships(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
-    for (EntityRelationship odsHasEntityRelationship : digitalSpecimen.getOdsHasEntityRelationships()) {
-      var relationship = new DwcDpRelationship();
-      relationship.setRelationshipID(odsHasEntityRelationship.getId());
-      relationship.setSubjectResourceID(digitalSpecimen.getId());
-      relationship.setSubjectResourceType("MaterialEntity");
-      relationship.setRelationshipType(odsHasEntityRelationship.getDwcRelationshipOfResource());
-      relationship.setRelatedResourceID(
-          odsHasEntityRelationship.getOdsRelatedResourceURI().toString());
-      if (!odsHasEntityRelationship.getOdsHasAgents().isEmpty()) {
-        relationship.setRelationshipAccordingToID(
-            odsHasEntityRelationship.getOdsHasAgents().getFirst().getId());
-        relationship.setRelationshipAccordingTo(
-            odsHasEntityRelationship.getOdsHasAgents().getFirst().getSchemaName());
-      }
-      if (odsHasEntityRelationship.getDwcRelationshipEstablishedDate() != null) {
-        relationship.setRelationshipEffectiveDate(
-            odsHasEntityRelationship.getDwcRelationshipEstablishedDate().toString());
-      }
-      if (relationship.getRelationshipID() == null) {
-        relationship.setRelationshipID(Integer.toString(relationship.hashCode()));
-      }
-      results.get(RELATIONSHIP).add(Pair.of(relationship.getRelationshipID(), relationship));
-    }
+    var excludeRelationships = List.of("hasDigitalMedia", "hasOrganisationID", "hasSourceSystemID",
+        "hasFDOType", "hasPhysicalIdentifier", "hasLicense", "hasCOLID");
+    digitalSpecimen.getOdsHasEntityRelationships().stream()
+        .filter(er -> !excludeRelationships.contains(er.getDwcRelationshipOfResource())).forEach(
+            odsHasEntityRelationship -> mapRelationship(digitalSpecimen, results,
+                odsHasEntityRelationship)
+        );
   }
 
   private void mapIdentification(DigitalSpecimen digitalSpecimen,
@@ -368,7 +392,7 @@ public class DwcDpService extends AbstractExportJobService {
     for (var odsHasIdentification : digitalSpecimen.getOdsHasIdentifications()) {
       var identification = new DwcDpIdentification();
       identification.setIdentificationID(odsHasIdentification.getId());
-      identification.setBasedOnMaterialEntityID(digitalSpecimen.getId());
+      identification.setBasedOnMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
       identification.setIdentificationType("MaterialEntity");
       identification.setVerbatimIdentification(odsHasIdentification.getDwcVerbatimIdentification());
       identification.setIsAcceptedIdentification(
@@ -378,7 +402,7 @@ public class DwcDpService extends AbstractExportJobService {
       identification.setIdentificationRemarks(odsHasIdentification.getDwcIdentificationRemarks());
       identification.setIdentifiedByID(odsHasIdentification.getDwcIdentificationID());
       if (identification.getIdentificationID() == null) {
-        identification.setIdentificationID(Integer.toString(identification.hashCode()));
+        identification.setIdentificationID(generateHashID(identification.toString()));
       }
       results.get(IDENTIFICATION)
           .add(Pair.of(identification.getIdentificationID(), identification));
@@ -398,7 +422,7 @@ public class DwcDpService extends AbstractExportJobService {
       agent.setAgentTypeVocabulary("https://schema.org/agent");
       agent.setPreferredAgentName(taxonAgent.getSchemaName());
       if (agent.getAgentID() == null) {
-        agent.setAgentID(Integer.toString(agent.hashCode()));
+        agent.setAgentID(generateHashID(agent.toString()));
       }
       results.get(AGENT).add(Pair.of(agent.getAgentID(), agent));
       mapTaxonAgentRole(taxonAgent, identificationId, agent.getAgentID(), results);
@@ -426,7 +450,7 @@ public class DwcDpService extends AbstractExportJobService {
       role.setAgentRole(odsHasRole.getSchemaRoleName());
       role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
       role.setAgentRoleDate(DwcDpUtils.parseAgentDate(odsHasRole));
-      results.get(IDENTIFICATION_AGENT).add(Pair.of(Integer.toString(role.hashCode()), role));
+      results.get(IDENTIFICATION_AGENT).add(Pair.of(generateHashID(role.toString()), role));
     }
   }
 
@@ -450,7 +474,8 @@ public class DwcDpService extends AbstractExportJobService {
   private void mapMaterial(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results, String eventId) {
     var material = new DwCDpMaterial();
-    material.setMaterialEntityID(digitalSpecimen.getId());
+    material.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
+    material.setDigitalSpecimenID(digitalSpecimen.getId());
     material.setEventID(eventId);
     material.setInstitutionID(digitalSpecimen.getOdsOrganisationID());
     material.setInstitutionCode(digitalSpecimen.getOdsOrganisationCode());
@@ -459,10 +484,17 @@ public class DwcDpService extends AbstractExportJobService {
     material.setCollectionID(digitalSpecimen.getDwcCollectionID());
     material.setPreparations(digitalSpecimen.getDwcPreparations());
     material.setDisposition(digitalSpecimen.getDwcDisposition());
+    material.setCatalogNumber(retrieveCatalogNumber(digitalSpecimen));
     material.setVerbatimLabel(digitalSpecimen.getDwcVerbatimLabel());
     material.setInformationWithheld(digitalSpecimen.getDwcInformationWithheld());
     material.setDataGeneralizations(digitalSpecimen.getDwcDataGeneralizations());
     results.get(MATERIAL).add(Pair.of(material.getMaterialEntityID(), material));
+  }
+
+  private String retrieveCatalogNumber(DigitalSpecimen digitalSpecimen) {
+    return digitalSpecimen.getOdsHasIdentifiers().stream()
+        .filter(identifier -> "dwc:catalogNumber".equals(identifier.getDctermsTitle())).map(
+            Identifier::getDctermsIdentifier).findFirst().orElse(null);
   }
 
   private void mapOccurrence(DigitalSpecimen digitalSpecimen,
@@ -486,7 +518,7 @@ public class DwcDpService extends AbstractExportJobService {
       dwcDpOccurrence.setOrganismRemarks(digitalSpecimen.getDwcOrganismRemarks());
       dwcDpOccurrence.setOrganismScope(digitalSpecimen.getDwcOrganismScope());
       if (dwcDpOccurrence.getOccurrenceID() == null) {
-        dwcDpOccurrence.setOccurrenceID(Integer.toString(dwcDpOccurrence.hashCode()));
+        dwcDpOccurrence.setOccurrenceID(generateHashID(dwcDpOccurrence.toString()));
       }
       if (!dwcDpOccurrence.isEmpty()) {
         results.get(OCCURRENCE).add(Pair.of(dwcDpOccurrence.getOccurrenceID(), dwcDpOccurrence));
@@ -584,7 +616,7 @@ public class DwcDpService extends AbstractExportJobService {
       }
     }
     if (dwcDpEvent.getEventID() == null) {
-      dwcDpEvent.setEventID(Integer.toString(dwcDpEvent.hashCode()));
+      dwcDpEvent.setEventID(generateHashID(dwcDpEvent.toString()));
     }
     results.get(EVENT).add(Pair.of(dwcDpEvent.getEventID(), dwcDpEvent));
     mapEventAgent(event, dwcDpEvent.getEventID(), results);
@@ -602,7 +634,7 @@ public class DwcDpService extends AbstractExportJobService {
       eventAgent.setAgentTypeVocabulary("https://schema.org/agent");
       eventAgent.setPreferredAgentName(agent.getSchemaName());
       if (eventAgent.getAgentID() == null) {
-        eventAgent.setAgentID(Integer.toString(eventAgent.hashCode()));
+        eventAgent.setAgentID(generateHashID(eventAgent.toString()));
       }
       results.get(AGENT).add(Pair.of(eventAgent.getAgentID(), eventAgent));
       mapEventAgentRole(agent, eventId, eventAgent.getAgentID(), results);
@@ -619,19 +651,21 @@ public class DwcDpService extends AbstractExportJobService {
       role.setAgentRole(odsHasRole.getSchemaRoleName());
       role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
       role.setAgentRoleDate(DwcDpUtils.parseAgentDate(odsHasRole));
-      results.get(EVENT_AGENT).add(Pair.of(Integer.toString(role.hashCode()), role));
+      results.get(EVENT_AGENT).add(Pair.of(generateHashID(role.toString()), role));
     }
   }
 
   private void mapIdentifiers(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
-    for (var identifier : digitalSpecimen.getOdsHasIdentifiers()) {
-      var dwcDpIdentifier = new DwcDpMaterialIdentifier();
-      dwcDpIdentifier.setIdentifier(identifier.getDctermsIdentifier());
-      dwcDpIdentifier.setMaterialEntityID(digitalSpecimen.getId());
-      dwcDpIdentifier.setIdentifierType(identifier.getDctermsTitle());
-      results.get(MATERIAL_IDENTIFIER)
-          .add(Pair.of(Integer.toString(dwcDpIdentifier.hashCode()), dwcDpIdentifier));
-    }
+    var excludeIdentifiers = List.of("dwc:catalogNumber", "dwca:ID");
+    digitalSpecimen.getOdsHasIdentifiers().stream()
+        .filter(id -> !excludeIdentifiers.contains(id.getDctermsTitle())).forEach(
+            identifier -> mapIdentifier(digitalSpecimen, results, identifier)
+        );
+  }
+
+
+  private String generateHashID(String objectString) {
+    return DigestUtils.md5DigestAsHex(objectString.getBytes(StandardCharsets.UTF_8));
   }
 }
