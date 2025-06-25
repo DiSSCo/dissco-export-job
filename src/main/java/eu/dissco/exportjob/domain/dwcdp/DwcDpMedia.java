@@ -15,7 +15,7 @@ public class DwcDpMedia implements Serializable {
   private String subtype;
   private String title;
   private String modified;
-  private String MetadataDate;
+  private String metadataDate;
   private String metadataLanguageLiteral;
   private String metadataLanguage;
   private String commenterLiteral;
@@ -28,11 +28,11 @@ public class DwcDpMedia implements Serializable {
   private String hasServiceAccessPoint;
   private String rights;
   private String rightsIRI;
-  private String Owner;
-  private String UsageTerms;
-  private String WebStatement;
+  private String owner;
+  private String usageTerms;
+  private String webStatement;
   private String licenseLogoURL;
-  private String Credit;
+  private String credit;
   private String attributionLogoURL;
   private String attributionLinkURL;
   private String fundingAttribution;
@@ -52,7 +52,7 @@ public class DwcDpMedia implements Serializable {
   private String language;
   private String languageIRI;
   private String tag;
-  private String CreateDate;
+  private String createDate;
   private String timeOfDay;
   private String captureDevice;
   private String resourceCreationTechnique;
@@ -70,7 +70,7 @@ public class DwcDpMedia implements Serializable {
   private String serviceExpectation;
   private String hashFunction;
   private String hashValue;
-  private String PixelXDimension;
-  private String PixelYDimension;
+  private String pixelXDimension;
+  private String pixelYDimension;
   private String feedbackURL;
 }
