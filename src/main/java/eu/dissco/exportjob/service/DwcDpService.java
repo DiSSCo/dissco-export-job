@@ -151,6 +151,7 @@ public class DwcDpService extends AbstractExportJobService {
     relationship.setRelationshipType(odsHasEntityRelationship.getDwcRelationshipOfResource());
     relationship.setRelatedResourceID(
         odsHasEntityRelationship.getOdsRelatedResourceURI().toString());
+    relationship.setRelationshipRemarks(odsHasEntityRelationship.getDwcRelationshipRemarks());
     if (!odsHasEntityRelationship.getOdsHasAgents().isEmpty()) {
       relationship.setRelationshipAccordingToID(
           odsHasEntityRelationship.getOdsHasAgents().getFirst().getId());
@@ -350,14 +351,30 @@ public class DwcDpService extends AbstractExportJobService {
           if (media.getDctermsType() != null) {
             dpMedia.setMediaType(media.getDctermsType().toString());
           }
-          dpMedia.setAccessURI(media.getAcAccessURI());
-          dpMedia.setWebStatement(media.getXmpRightsWebStatement());
-          dpMedia.setFormat(media.getDctermsFormat());
+          dpMedia.setMetadataLanguage(media.getAcMetadataLanguage());
+          dpMedia.setMetadataLanguageLiteral(media.getAcMetadataLanguageLiteral());
+          dpMedia.setSubtype(media.getAcSubtype());
+          dpMedia.setSubtypeLiteral(media.getAcSubtypeLiteral());
+          dpMedia.setComments(media.getAcComments());
           dpMedia.setRights(media.getDctermsRights());
+          dpMedia.setUsageTerms(media.getXmpRightsUsageTerms());
+          dpMedia.setWebStatement(media.getXmpRightsWebStatement());
+          dpMedia.setAccessURI(media.getAcAccessURI());
+          dpMedia.setFormat(media.getDctermsFormat());
           dpMedia.setSource(media.getDctermsSource());
+          dpMedia.setDescription(media.getDctermsDescription());
+          dpMedia.setTag(String.join(", ", media.getAcTag()));
           dpMedia.setCreateDate(media.getXmpCreateDate());
+          dpMedia.setTimeOfDay(media.getAcTimeOfDay());
+          dpMedia.setCaptureDevice(media.getAcCaptureDevice());
+          dpMedia.setResourceCreationTechnique(media.getAcResourceCreationTechnique());
           dpMedia.setModified(media.getDctermsModified());
-          dpMedia.setMediaLanguage(media.getDctermsLanguage());
+          dpMedia.setLanguage(media.getDctermsLanguage());
+          dpMedia.setVariant(media.getAcVariant());
+          dpMedia.setVariantLiteral(media.getAcVariantLiteral());
+          dpMedia.setVariantDescription(media.getAcVariantDescription());
+          dpMedia.setPixelXDimension(String.valueOf(media.getExifPixelXDimension()));
+          dpMedia.setPixelYDimension(String.valueOf(media.getExifPixelYDimension()));
           results.get(MEDIA).add(Pair.of(dpMedia.getMediaID(), dpMedia));
         });
   }
@@ -379,7 +396,7 @@ public class DwcDpService extends AbstractExportJobService {
   private void mapRelationships(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
     var excludeRelationships = List.of("hasDigitalMedia", "hasOrganisationID", "hasSourceSystemID",
-        "hasFDOType", "hasPhysicalIdentifier", "hasLicense", "hasCOLID");
+        "hasFDOType", "hasPhysicalIdentifier", "hasLicense", "hasCOLID", "hasCollectionID");
     digitalSpecimen.getOdsHasEntityRelationships().stream()
         .filter(er -> !excludeRelationships.contains(er.getDwcRelationshipOfResource())).forEach(
             odsHasEntityRelationship -> mapRelationship(digitalSpecimen, results,
@@ -400,7 +417,6 @@ public class DwcDpService extends AbstractExportJobService {
       identification.setTypeStatus(odsHasIdentification.getDwcTypeStatus());
       identification.setDateIdentified(odsHasIdentification.getDwcDateIdentified());
       identification.setIdentificationRemarks(odsHasIdentification.getDwcIdentificationRemarks());
-      identification.setIdentifiedByID(odsHasIdentification.getDwcIdentificationID());
       if (identification.getIdentificationID() == null) {
         identification.setIdentificationID(generateHashID(identification.toString()));
       }
@@ -484,16 +500,17 @@ public class DwcDpService extends AbstractExportJobService {
     material.setCollectionID(digitalSpecimen.getDwcCollectionID());
     material.setPreparations(digitalSpecimen.getDwcPreparations());
     material.setDisposition(digitalSpecimen.getDwcDisposition());
-    material.setCatalogNumber(retrieveCatalogNumber(digitalSpecimen));
+    material.setCatalogNumber(retrieveSpecificIdentifier(digitalSpecimen, "dwc:catalogNumber"));
+    material.setRecordNumber(retrieveSpecificIdentifier(digitalSpecimen, "dwc:recordNumber"));
     material.setVerbatimLabel(digitalSpecimen.getDwcVerbatimLabel());
     material.setInformationWithheld(digitalSpecimen.getDwcInformationWithheld());
     material.setDataGeneralizations(digitalSpecimen.getDwcDataGeneralizations());
     results.get(MATERIAL).add(Pair.of(material.getMaterialEntityID(), material));
   }
 
-  private String retrieveCatalogNumber(DigitalSpecimen digitalSpecimen) {
+  private String retrieveSpecificIdentifier(DigitalSpecimen digitalSpecimen, String identifierTitle) {
     return digitalSpecimen.getOdsHasIdentifiers().stream()
-        .filter(identifier -> "dwc:catalogNumber".equals(identifier.getDctermsTitle())).map(
+        .filter(identifier -> identifierTitle.equals(identifier.getDctermsTitle())).map(
             Identifier::getDctermsIdentifier).findFirst().orElse(null);
   }
 
@@ -657,7 +674,7 @@ public class DwcDpService extends AbstractExportJobService {
 
   private void mapIdentifiers(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
-    var excludeIdentifiers = List.of("dwc:catalogNumber", "dwca:ID");
+    var excludeIdentifiers = List.of("dwc:catalogNumber", "dwca:ID", "dwc:recordNumber");
     digitalSpecimen.getOdsHasIdentifiers().stream()
         .filter(id -> !excludeIdentifiers.contains(id.getDctermsTitle())).forEach(
             identifier -> mapIdentifier(digitalSpecimen, results, identifier)
