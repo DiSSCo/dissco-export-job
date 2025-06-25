@@ -51,6 +51,8 @@ class DataPackageComponentTest {
     assertThat(datapackageNode.get("licenses").get(0).get("title").asText())
         .isEqualTo("CC-BY-4.0");
     assertThat(datapackageNode.get("resources").size()).isEqualTo(6);
+    assertThat(datapackageNode.get("description").asText()).isEqualTo(
+        "Database contains specimen records from the Tunicata collection of the Naturalis Biodiversity Center (Leiden, Netherlands). These specimens originate from the collections of the National Museum of Natural History (RMNH; Rijksmuseum voor Natuurlijke Historie), later National Museum of Natural History, Naturalis in Leiden and of the former Zoological Museum Amsterdam (ZMA). On request more information can be provided.");
   }
 
   @Test

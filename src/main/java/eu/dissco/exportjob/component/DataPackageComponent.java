@@ -59,7 +59,7 @@ public class DataPackageComponent {
     while (xmlEventReader.hasNext()) {
       var element = xmlEventReader.nextEvent();
       extractTitle(element, "title", templateMap, xmlEventReader);
-      extractTitle(element, "description", templateMap, xmlEventReader);
+      extractAbstract(element, templateMap, xmlEventReader);
       extractTitle(element, "licenseName", templateMap, xmlEventReader);
       extractTitle(element, "identifier", templateMap, xmlEventReader);
     }
@@ -67,6 +67,31 @@ public class DataPackageComponent {
     filesContainingRecords.forEach(
         fileClass -> templateMap.put(fileClass.getClassName().replace("-", "_"), "true"));
     return templateMap;
+  }
+
+  private void extractAbstract(XMLEvent element, HashMap<String, String> templateMap, XMLEventReader xmlEventReader)
+      throws XMLStreamException {
+    var stringBuilder = new StringBuilder();
+    var xmlElement = "abstract";
+    if (isStartElement(element, xmlElement)) {
+      var nextElement = xmlEventReader.nextEvent();
+      while (nextElement != null && !isEndElement(nextElement, xmlElement)) {
+        if (nextElement.isCharacters()){
+          stringBuilder.append(nextElement.asCharacters().getData().trim());
+        }
+        nextElement = xmlEventReader.nextEvent();
+        }
+      templateMap.put("description", stringBuilder.toString());
+      }
+    }
+
+  private boolean isEndElement(XMLEvent element, String field) {
+    if (element != null) {
+      return element.isEndElement() && element.asEndElement().getName().getLocalPart()
+          .equals(field);
+    } else {
+      return false;
+    }
   }
 
   private void extractTitle(XMLEvent element, String templateElement,
