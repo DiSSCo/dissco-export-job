@@ -6,6 +6,7 @@ import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
+import eu.dissco.exportjob.repository.SourceSystemRepository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,13 +28,13 @@ public class DoiListService extends AbstractExportJobService {
 
   public DoiListService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
-      S3Repository s3Repository, IndexProperties indexProperties, Environment environment) {
-    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository, environment);
+      S3Repository s3Repository, IndexProperties indexProperties, Environment environment, SourceSystemRepository sourceSystemRepository) {
+    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository, environment, sourceSystemRepository);
   }
 
   @Override
   protected void postProcessResults(JobRequest jobRequest) {
-    log.debug("This method is not required for DwC-DP exports");
+    log.debug("This method is not required for DOI List exports");
   }
 
   protected void writeHeaderToFile() throws IOException {
@@ -52,7 +53,7 @@ public class DoiListService extends AbstractExportJobService {
     writeResultsToFile(searchResults);
   }
 
-  protected void writeResultsToFile(List<JsonNode> searchResults) throws IOException {
+  private void writeResultsToFile(List<JsonNode> searchResults) throws IOException {
     try (
         var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation(), true);
         var gzip = new GZIPOutputStream(byteOutputStream)) {
