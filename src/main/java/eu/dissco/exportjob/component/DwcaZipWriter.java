@@ -74,7 +74,8 @@ public class DwcaZipWriter {
   private void createWriter(Term rowType, Map<Term, Integer> mapping)
       throws IOException {
     if (mapping.isEmpty()) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException(
+          "The writer mapping for term: " + coreIdTerm.simpleName() + " must not be empty.");
     }
     final int maxMapping = maxMappingColumn(mapping);
     TabWriter writer = addArchiveFile(rowType, mapping);

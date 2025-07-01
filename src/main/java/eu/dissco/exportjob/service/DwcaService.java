@@ -290,7 +290,7 @@ public class DwcaService extends AbstractExportJobService {
     var specimenMediaMap = digitalMediaList.stream()
         .collect(Collectors.groupingBy(media -> media.getOdsHasEntityRelationships().stream()
             .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalSpecimen"))
-            .map(er -> er.getOdsRelatedResourceURI().toString()).findFirst().get()));
+            .map(er -> er.getOdsRelatedResourceURI().toString()).findFirst().orElseThrow()));
     specimenMediaMap.keySet().removeIf(id -> !digitalSpecimenIds.contains(id));
     return specimenMediaMap;
   }
