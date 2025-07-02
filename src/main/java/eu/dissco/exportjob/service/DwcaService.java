@@ -2,8 +2,9 @@ package eu.dissco.exportjob.service;
 
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_IDENTIFIERS;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_RELATIONSHIPS;
-import static eu.dissco.exportjob.utils.ExportUtils.retrieveAgentIds;
-import static eu.dissco.exportjob.utils.ExportUtils.retrieveAgentNames;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentId;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentName;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,7 +27,6 @@ import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.Location;
 import eu.dissco.exportjob.schema.TaxonIdentification;
-import eu.dissco.exportjob.utils.ExportUtils;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -69,7 +69,69 @@ public class DwcaService extends AbstractExportJobService {
     this.dwcaZipWriter = dwcaZipWriter;
   }
 
-  private static void mapEvent(Event event, ArrayList<Pair<Term, String>> occurrenceRecord) {
+  @Override
+  protected void writeHeaderToFile() throws IOException {
+    log.debug("This method is not required for DWCA exports");
+  }
+
+  @Override
+  protected void postProcessResults(JobRequest jobRequest)
+      throws IOException, FailedProcessingException {
+    if (Boolean.TRUE.equals(jobRequest.isSourceSystemJob())) {
+      writeEmlFile(jobRequest, dwcaZipWriter.getFileSystem());
+    }
+    try {
+      dwcaZipWriter.close();
+    } catch (TemplateException e) {
+      throw new FailedProcessingException("Failed to create the metadata file", e);
+    }
+  }
+
+  @Override
+  protected void processSearchResults(List<JsonNode> searchResults) throws IOException {
+    var digitalSpecimenList = searchResults.stream()
+        .map(json -> objectMapper.convertValue(json, DigitalSpecimen.class)).toList();
+    var digitalMediaList = elasticSearchRepository.getTargetMediaById(
+            getMediaIds(digitalSpecimenList)).stream()
+        .map(json -> objectMapper.convertValue(json, DigitalMedia.class)).toList();
+    var specimenToDigitalMediaMapping = createSpecimenToMediaMapping(digitalSpecimenList,
+        digitalMediaList);
+    var mappedResult = mapToDwcaRecords(digitalSpecimenList, specimenToDigitalMediaMapping);
+    dwcaZipWriter.writeRecords(mappedResult);
+  }
+
+  private Map<Term, List<List<Pair<Term, String>>>> mapToDwcaRecords(
+      List<DigitalSpecimen> digitalSpecimenList,
+      Map<String, List<DigitalMedia>> specimenToDigitalMediaMapping) {
+    var mappedList = new HashMap<Term, List<List<Pair<Term, String>>>>();
+    var occurrenceList = new ArrayList<List<Pair<Term, String>>>();
+    var identificationList = new ArrayList<List<Pair<Term, String>>>();
+    var referenceList = new ArrayList<List<Pair<Term, String>>>();
+    var identifierList = new ArrayList<List<Pair<Term, String>>>();
+    var relationshipList = new ArrayList<List<Pair<Term, String>>>();
+    var digitalMediaList = new ArrayList<List<Pair<Term, String>>>();
+    for (var digitalSpecimen : digitalSpecimenList) {
+      addOccurrence(digitalSpecimen, occurrenceList);
+      addIdentifications(digitalSpecimen, identificationList, referenceList);
+      addIdentifiers(digitalSpecimen, identifierList);
+      addRelationships(digitalSpecimen, relationshipList);
+      addReference(digitalSpecimen.getOdsHasCitations(), digitalSpecimen.getId(), referenceList);
+      var media = specimenToDigitalMediaMapping.get(digitalSpecimen.getId());
+      if (media != null && !media.isEmpty()) {
+        addDigitalMedia(specimenToDigitalMediaMapping.get(digitalSpecimen.getId()),
+            digitalSpecimen.getId(), digitalMediaList);
+      }
+    }
+    mappedList.put(DwcTerm.Occurrence, occurrenceList);
+    mappedList.put(DwcTerm.Identification, identificationList);
+    mappedList.put(GbifTerm.Identifier, identifierList);
+    mappedList.put(GbifTerm.Reference, referenceList);
+    mappedList.put(DwcTerm.ResourceRelationship, relationshipList);
+    mappedList.put(AcTerm.Multimedia, digitalMediaList);
+    return mappedList;
+  }
+
+  private void mapEvent(Event event, ArrayList<Pair<Term, String>> occurrenceRecord) {
     occurrenceRecord.add(Pair.of(DwcTerm.sex, event.getDwcSex()));
     occurrenceRecord.add(Pair.of(DwcTerm.lifeStage, event.getDwcLifeStage()));
     occurrenceRecord.add(
@@ -105,7 +167,7 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.eventID, event.getId()));
   }
 
-  private static void mapLocation(Location location,
+  private void mapLocation(Location location,
       ArrayList<Pair<Term, String>> occurrenceRecord) {
     occurrenceRecord.add(Pair.of(DwcTerm.locationID, location.getId()));
     occurrenceRecord.add(Pair.of(DwcTerm.higherGeography, location.getDwcHigherGeography()));
@@ -140,7 +202,7 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.locationRemarks, location.getDwcLocationRemarks()));
   }
 
-  private static void mapGeologicalContext(
+  private void mapGeologicalContext(
       GeologicalContext geologicalContext, ArrayList<Pair<Term, String>> occurrenceRecord) {
     occurrenceRecord.add(Pair.of(DwcTerm.geologicalContextID, geologicalContext.getId()));
     occurrenceRecord.add(Pair.of(DwcTerm.earliestEonOrLowestEonothem,
@@ -175,7 +237,7 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.bed, geologicalContext.getDwcBed()));
   }
 
-  private static void addIdentifiers(DigitalSpecimen digitalSpecimen,
+  private void addIdentifiers(DigitalSpecimen digitalSpecimen,
       ArrayList<List<Pair<Term, String>>> identificationRecords) {
     var identifiers = digitalSpecimen.getOdsHasIdentifiers().stream().filter(
             identifier -> !EXCLUDE_IDENTIFIERS.contains(identifier.getDctermsTitle()))
@@ -186,7 +248,7 @@ public class DwcaService extends AbstractExportJobService {
     }
   }
 
-  private static List<Pair<Term, String>> mapIdentifier(DigitalSpecimen digitalSpecimen,
+  private List<Pair<Term, String>> mapIdentifier(DigitalSpecimen digitalSpecimen,
       Identifier identifier) {
     var identifierRecord = new ArrayList<Pair<Term, String>>();
     identifierRecord.add(Pair.of(DwcaTerm.ID, digitalSpecimen.getId()));
@@ -200,7 +262,7 @@ public class DwcaService extends AbstractExportJobService {
     return identifierRecord;
   }
 
-  private static List<Pair<Term, String>> mapDigitalMedia(String digitalSpecimenId,
+  private List<Pair<Term, String>> mapDigitalMedia(String digitalSpecimenId,
       DigitalMedia media) {
     var mediaRecord = new ArrayList<Pair<Term, String>>();
     mediaRecord.add(Pair.of(DwcaTerm.ID, digitalSpecimenId));
@@ -243,7 +305,7 @@ public class DwcaService extends AbstractExportJobService {
     return mediaRecord;
   }
 
-  private static void addGeologicalContext(Location location,
+  private void addGeologicalContext(Location location,
       ArrayList<Pair<Term, String>> occurrenceRecord) {
     if (location.getOdsHasGeologicalContext() != null) {
       var geologicalContext = location.getOdsHasGeologicalContext();
@@ -251,97 +313,8 @@ public class DwcaService extends AbstractExportJobService {
     }
   }
 
-  @Override
-  protected void writeHeaderToFile() throws IOException {
-    log.debug("This method is not required for DWCA exports");
-  }
-
-  @Override
-  protected void postProcessResults(JobRequest jobRequest)
-      throws IOException, FailedProcessingException {
-    if (Boolean.TRUE.equals(jobRequest.isSourceSystemJob())) {
-      writeEmlFile(jobRequest, dwcaZipWriter.getFileSystem());
-    }
-    try {
-      dwcaZipWriter.close();
-    } catch (TemplateException e) {
-      throw new FailedProcessingException("Failed to create the metadata file", e);
-    }
-  }
-
-  @Override
-  protected void processSearchResults(List<JsonNode> searchResults) throws IOException {
-    var digitalSpecimenList = searchResults.stream()
-        .map(json -> objectMapper.convertValue(json, DigitalSpecimen.class)).toList();
-    var digitalMediaList = elasticSearchRepository.getTargetMediaById(
-            getMediaIds(digitalSpecimenList)).stream()
-        .map(json -> objectMapper.convertValue(json, DigitalMedia.class)).toList();
-    var specimenToDigitalMediaMapping = createSpecimenToMediaMapping(digitalSpecimenList,
-        digitalMediaList);
-    var mappedResult = mapToDwcaRecords(digitalSpecimenList, specimenToDigitalMediaMapping);
-    dwcaZipWriter.write(mappedResult);
-  }
-
-  // We need to remove any media that does not have a corresponding digital specimen
-  // This is possible because a media item can be linked to multiple digital specimens
-  private Map<String, List<DigitalMedia>> createSpecimenToMediaMapping(
-      List<DigitalSpecimen> digitalSpecimenList, List<DigitalMedia> digitalMediaList) {
-    var digitalSpecimenIds = digitalSpecimenList.stream().map(DigitalSpecimen::getId).toList();
-    var specimenMediaMap = digitalMediaList.stream()
-        .collect(Collectors.groupingBy(media -> media.getOdsHasEntityRelationships().stream()
-            .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalSpecimen"))
-            .map(er -> er.getOdsRelatedResourceURI().toString()).findFirst().orElseThrow()));
-    specimenMediaMap.keySet().removeIf(id -> !digitalSpecimenIds.contains(id));
-    return specimenMediaMap;
-  }
-
-  private void addDigitalMedia(List<DigitalMedia> digitalMedia, String digitalSpecimenId,
-      ArrayList<List<Pair<Term, String>>> digitalMediaList) {
-    for (var media : digitalMedia) {
-      digitalMediaList.add(mapDigitalMedia(digitalSpecimenId, media));
-    }
-  }
-
-  private List<String> getMediaIds(List<DigitalSpecimen> digitalSpecimenList) {
-    return digitalSpecimenList.stream()
-        .map(DigitalSpecimen::getOdsHasEntityRelationships)
-        .flatMap(List::stream)
-        .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalMedia"))
-        .map(er -> er.getOdsRelatedResourceURI().toString()).toList();
-  }
-
-  private Map<Term, List<List<Pair<Term, String>>>> mapToDwcaRecords(
-      List<DigitalSpecimen> digitalSpecimenList,
-      Map<String, List<DigitalMedia>> specimenToDigitalMediaMapping) {
-    var mappedList = new HashMap<Term, List<List<Pair<Term, String>>>>();
-    var occurrenceList = new ArrayList<List<Pair<Term, String>>>();
-    var identificationList = new ArrayList<List<Pair<Term, String>>>();
-    var referenceList = new ArrayList<List<Pair<Term, String>>>();
-    var identifierList = new ArrayList<List<Pair<Term, String>>>();
-    var relationshipList = new ArrayList<List<Pair<Term, String>>>();
-    var digitalMediaList = new ArrayList<List<Pair<Term, String>>>();
-    for (var digitalSpecimen : digitalSpecimenList) {
-      occurrenceList.add(mapToOccurrence(digitalSpecimen));
-      addIdentifications(digitalSpecimen, identificationList, referenceList);
-      addIdentifiers(digitalSpecimen, identifierList);
-      addRelationships(digitalSpecimen, relationshipList);
-      addReference(digitalSpecimen.getOdsHasCitations(), digitalSpecimen.getId(), referenceList);
-      var media = specimenToDigitalMediaMapping.get(digitalSpecimen.getId());
-      if (media != null && !media.isEmpty()) {
-        addDigitalMedia(specimenToDigitalMediaMapping.get(digitalSpecimen.getId()),
-            digitalSpecimen.getId(), digitalMediaList);
-      }
-    }
-    mappedList.put(DwcTerm.Occurrence, occurrenceList);
-    mappedList.put(DwcTerm.Identification, identificationList);
-    mappedList.put(GbifTerm.Identifier, identifierList);
-    mappedList.put(GbifTerm.Reference, referenceList);
-    mappedList.put(DwcTerm.ResourceRelationship, relationshipList);
-    mappedList.put(AcTerm.Multimedia, digitalMediaList);
-    return mappedList;
-  }
-
-  private List<Pair<Term, String>> mapToOccurrence(DigitalSpecimen digitalSpecimen) {
+  private void addOccurrence(DigitalSpecimen digitalSpecimen,
+      List<List<Pair<Term, String>>> occurrenceList) {
     var occurrenceRecord = new ArrayList<Pair<Term, String>>();
     mapDigitalSpecimen(digitalSpecimen, occurrenceRecord);
     if (digitalSpecimen.getOdsHasEvents() != null && !digitalSpecimen.getOdsHasEvents()
@@ -355,10 +328,11 @@ public class DwcaService extends AbstractExportJobService {
         addGeologicalContext(location, occurrenceRecord);
       }
     }
-    return occurrenceRecord;
+    occurrenceList.add(occurrenceRecord);
   }
 
-  private void addGeoreference(Location location, ArrayList<Pair<Term, String>> occurrenceRecord) {
+  private void addGeoreference(Location location,
+      ArrayList<Pair<Term, String>> occurrenceRecord) {
     if (location.getOdsHasGeoreference() != null) {
       var georeference = location.getOdsHasGeoreference();
       mapGeoreference(georeference, occurrenceRecord);
@@ -376,7 +350,7 @@ public class DwcaService extends AbstractExportJobService {
             citation.getDctermsBibliographicCitation()));
         referenceRecord.add(Pair.of(DcTerm.title, citation.getDctermsTitle()));
         referenceRecord.add(Pair.of(DcTerm.creator,
-            retrieveAgentNames(citation.getOdsHasAgents(), null)));
+            retrieveCombinedAgentName(citation.getOdsHasAgents(), null)));
         referenceRecord.add(Pair.of(DcTerm.date, citation.getDctermsDate()));
         referenceRecord.add(Pair.of(DcTerm.description, citation.getDctermsDescription()));
         referenceRecord.add(Pair.of(DcTerm.type, citation.getDctermsType()));
@@ -406,13 +380,14 @@ public class DwcaService extends AbstractExportJobService {
         digitalSpecimen.getDwcInformationWithheld()));
     occurrenceList.add(Pair.of(DwcTerm.dataGeneralizations,
         digitalSpecimen.getDwcDataGeneralizations()));
-    occurrenceList.add(Pair.of(DwcTerm.occurrenceID, digitalSpecimen.getId()));
+    occurrenceList.add(Pair.of(DwcTerm.occurrenceID,
+        retrieveIdentifier(digitalSpecimen, "dwc:occurrenceID")));
     occurrenceList.add(Pair.of(DwcTerm.catalogNumber,
-        ExportUtils.retrieveSpecificIdentifier(digitalSpecimen, "dwc:catalogNumber")));
+        retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber")));
     occurrenceList.add(Pair.of(DwcTerm.recordedBy,
-        retrieveAgentNames(digitalSpecimen.getOdsHasAgents(), "collector")));
+        retrieveCombinedAgentName(digitalSpecimen.getOdsHasAgents(), "collector")));
     occurrenceList.add(Pair.of(DwcTerm.recordedByID,
-        retrieveAgentIds(digitalSpecimen.getOdsHasAgents(), "collector")));
+        retrieveCombinedAgentId(digitalSpecimen.getOdsHasAgents(), "collector")));
     occurrenceList.add(Pair.of(DwcTerm.organismQuantity, digitalSpecimen.getDwcOrganismQuantity()));
     occurrenceList.add(Pair.of(DwcTerm.organismQuantityType,
         digitalSpecimen.getDwcOrganismQuantityType()));
@@ -453,7 +428,7 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.footprintSpatialFit,
         String.valueOf(georeference.getDwcFootprintSpatialFit())));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferencedBy,
-        retrieveAgentNames(georeference.getOdsHasAgents(), null)));
+        retrieveCombinedAgentName(georeference.getOdsHasAgents(), null)));
     occurrenceRecord.add(
         Pair.of(DwcTerm.georeferencedDate, georeference.getDwcGeoreferencedDate()));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferenceProtocol,
@@ -488,9 +463,9 @@ public class DwcaService extends AbstractExportJobService {
         identification.getDwcIdentificationQualifier()));
     identificationRecord.add(Pair.of(DwcTerm.typeStatus, identification.getDwcTypeStatus()));
     identificationRecord.add(Pair.of(DwcTerm.identifiedBy,
-        retrieveAgentNames(identification.getOdsHasAgents(), "identifier")));
+        retrieveCombinedAgentName(identification.getOdsHasAgents(), "identifier")));
     identificationRecord.add(Pair.of(DwcTerm.identifiedByID,
-        retrieveAgentIds(identification.getOdsHasAgents(), "identifier")));
+        retrieveCombinedAgentId(identification.getOdsHasAgents(), "identifier")));
     identificationRecord.add(Pair.of(DwcTerm.dateIdentified,
         identification.getDwcDateIdentified()));
     identificationRecord.add(Pair.of(DwcTerm.identificationVerificationStatus,
@@ -571,7 +546,7 @@ public class DwcaService extends AbstractExportJobService {
     relationshipRecord.add(Pair.of(DwcTerm.relationshipOfResource,
         relationship.getDwcRelationshipOfResource()));
     relationshipRecord.add(Pair.of(DwcTerm.relationshipAccordingTo,
-        retrieveAgentNames(relationship.getOdsHasAgents(), null)));
+        retrieveCombinedAgentName(relationship.getOdsHasAgents(), null)));
     relationshipRecord.add(Pair.of(DwcTerm.relationshipEstablishedDate,
         relationship.getDwcRelationshipEstablishedDate() != null
             ? relationship.getDwcRelationshipEstablishedDate().toString() : null));
@@ -579,6 +554,35 @@ public class DwcaService extends AbstractExportJobService {
         relationship.getDwcRelationshipRemarks()));
     return relationshipRecord;
   }
+  // We need to remove any media that does not have a corresponding digital specimen
+  // This is possible because a media item can be linked to multiple digital specimens
+  private Map<String, List<DigitalMedia>> createSpecimenToMediaMapping(
+      List<DigitalSpecimen> digitalSpecimenList, List<DigitalMedia> digitalMediaList) {
+    var digitalSpecimenIds = digitalSpecimenList.stream().map(DigitalSpecimen::getId).collect(
+        Collectors.toSet());
+    var specimenMediaMap = digitalMediaList.stream()
+        .collect(Collectors.groupingBy(media -> media.getOdsHasEntityRelationships().stream()
+            .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalSpecimen"))
+            .map(er -> er.getOdsRelatedResourceURI().toString()).findFirst().orElseThrow()));
+    specimenMediaMap.keySet().removeIf(id -> !digitalSpecimenIds.contains(id));
+    return specimenMediaMap;
+  }
+
+  private void addDigitalMedia(List<DigitalMedia> digitalMedia, String digitalSpecimenId,
+      ArrayList<List<Pair<Term, String>>> digitalMediaList) {
+    for (var media : digitalMedia) {
+      digitalMediaList.add(mapDigitalMedia(digitalSpecimenId, media));
+    }
+  }
+
+  private List<String> getMediaIds(List<DigitalSpecimen> digitalSpecimenList) {
+    return digitalSpecimenList.stream()
+        .map(DigitalSpecimen::getOdsHasEntityRelationships)
+        .flatMap(List::stream)
+        .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalMedia"))
+        .map(er -> er.getOdsRelatedResourceURI().toString()).toList();
+  }
+
 
   @Override
   protected List<String> targetFields() {

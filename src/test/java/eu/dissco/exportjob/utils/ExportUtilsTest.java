@@ -83,7 +83,7 @@ class ExportUtilsTest {
         List.of(givenIdentifier(id, "dwc:catalogNumber"), givenIdentifier("7890", "anotherID")));
 
     // When
-    var result = ExportUtils.retrieveSpecificIdentifier(digitalSpecimen, "dwc:catalogNumber");
+    var result = ExportUtils.retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber");
 
     // Then
     assertThat(result).isEqualTo(id);
@@ -95,7 +95,7 @@ class ExportUtilsTest {
     // Given
 
     // When
-    var result = ExportUtils.retrieveAgentIds(agents, role);
+    var result = ExportUtils.retrieveCombinedAgentId(agents, role);
 
     // Then
     assertThat(result).isEqualTo(expected);
@@ -107,7 +107,7 @@ class ExportUtilsTest {
     // Given
 
     // When
-    var result = ExportUtils.retrieveAgentNames(agents, role);
+    var result = ExportUtils.retrieveCombinedAgentName(agents, role);
 
     // Then
     assertThat(result).isEqualTo(expected);

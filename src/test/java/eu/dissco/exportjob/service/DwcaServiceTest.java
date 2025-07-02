@@ -84,7 +84,7 @@ class DwcaServiceTest {
     service.handleMessage(givenSourceSystemRequest());
 
     // Then
-    then(dwcaZipWriter).should().write(anyMap());
+    then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
     then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
@@ -105,7 +105,7 @@ class DwcaServiceTest {
     service.handleMessage(givenJobRequest());
 
     // Then
-    then(dwcaZipWriter).should().write(anyMap());
+    then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
     then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
@@ -125,7 +125,7 @@ class DwcaServiceTest {
     service.handleMessage(givenJobRequest());
 
     // Then
-    then(dwcaZipWriter).should().write(anyMap());
+    then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
     then(exporterBackendClient).should().updateJobState(JOB_ID, FAILED);
   }

@@ -56,7 +56,7 @@ class DwcaZipWriterTest {
         Pair.of(AcTerm.accessURI, "http://example.com/image.jpg"))));
 
     // When
-    dwcaZipWriter.write(map);
+    dwcaZipWriter.writeRecords(map);
     dwcaZipWriter.close();
 
     // Then
@@ -78,7 +78,7 @@ class DwcaZipWriterTest {
             Pair.of(DwcTerm.institutionID, "https://ror.org/xxx"))));
 
     // When
-    assertThrows(IllegalArgumentException.class, () -> dwcaZipWriter.write(map));
+    assertThrows(IllegalArgumentException.class, () -> dwcaZipWriter.writeRecords(map));
   }
 
   @Test
@@ -91,7 +91,7 @@ class DwcaZipWriterTest {
     map.put(DwcTerm.Identification, List.of(List.of()));
 
     // When
-    assertThrows(IllegalArgumentException.class, () -> dwcaZipWriter.write(map));
+    assertThrows(IllegalArgumentException.class, () -> dwcaZipWriter.writeRecords(map));
   }
 
 }

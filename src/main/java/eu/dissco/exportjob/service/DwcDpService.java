@@ -15,7 +15,7 @@ import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.OCCURRENCE;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.RELATIONSHIP;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_IDENTIFIERS;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_RELATIONSHIPS;
-import static eu.dissco.exportjob.utils.ExportUtils.retrieveSpecificIdentifier;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -477,8 +477,8 @@ public class DwcDpService extends AbstractExportJobService {
     material.setCollectionID(digitalSpecimen.getDwcCollectionID());
     material.setPreparations(digitalSpecimen.getDwcPreparations());
     material.setDisposition(digitalSpecimen.getDwcDisposition());
-    material.setCatalogNumber(retrieveSpecificIdentifier(digitalSpecimen, "dwc:catalogNumber"));
-    material.setRecordNumber(retrieveSpecificIdentifier(digitalSpecimen, "dwc:recordNumber"));
+    material.setCatalogNumber(retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber"));
+    material.setRecordNumber(retrieveIdentifier(digitalSpecimen, "dwc:recordNumber"));
     material.setVerbatimLabel(digitalSpecimen.getDwcVerbatimLabel());
     material.setInformationWithheld(digitalSpecimen.getDwcInformationWithheld());
     material.setDataGeneralizations(digitalSpecimen.getDwcDataGeneralizations());
