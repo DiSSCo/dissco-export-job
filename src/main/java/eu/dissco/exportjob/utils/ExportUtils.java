@@ -44,7 +44,7 @@ public class ExportUtils {
     }
     List<String> agentIds = new ArrayList<>();
     for (Agent agent : odsHasAgents) {
-      if (roleName == null || roleName.isEmpty() || agent.getOdsHasRoles().stream()
+      if (roleName == null || agent.getOdsHasRoles().stream()
           .anyMatch(role -> role.getSchemaRoleName().equals(roleName))) {
         String agentId = agent.getSchemaIdentifier();
         if (agentId != null && !agentId.isEmpty()) {
@@ -61,7 +61,7 @@ public class ExportUtils {
     }
     List<String> agentNames = new ArrayList<>();
     for (Agent agent : odsHasAgents) {
-      if (roleName == null || roleName.isEmpty() || agent.getOdsHasRoles().stream()
+      if (roleName == null || agent.getOdsHasRoles().stream()
           .anyMatch(role -> role.getSchemaRoleName().equals(roleName))) {
         String agentName = agent.getSchemaName();
         if (agentName != null && !agentName.isEmpty()) {

@@ -49,9 +49,9 @@ public class DwcaZipWriter {
     this.freemarker = freemarker;
   }
 
-  private static ArchiveField getIdField(int column) {
+  private static ArchiveField getIdField() {
     ArchiveField field = new ArchiveField();
-    field.setIndex(column);
+    field.setIndex(CORE_ID_COLUMN);
     return field;
   }
 
@@ -145,7 +145,7 @@ public class DwcaZipWriter {
     af.setEncoding("UTF-8");
     af.setRowType(rowType);
     af.addLocation(dataFile.getFileName().toString());
-    af.setId(getIdField(CORE_ID_COLUMN));
+    af.setId(getIdField());
     return af;
   }
 

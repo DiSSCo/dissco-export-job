@@ -554,8 +554,7 @@ public class DwcaService extends AbstractExportJobService {
         relationship.getDwcRelationshipRemarks()));
     return relationshipRecord;
   }
-  // We need to remove any media that does not have a corresponding digital specimen
-  // This is possible because a media item can be linked to multiple digital specimens
+
   private Map<String, List<DigitalMedia>> createSpecimenToMediaMapping(
       List<DigitalSpecimen> digitalSpecimenList, List<DigitalMedia> digitalMediaList) {
     var digitalSpecimenIds = digitalSpecimenList.stream().map(DigitalSpecimen::getId).collect(
@@ -564,6 +563,8 @@ public class DwcaService extends AbstractExportJobService {
         .collect(Collectors.groupingBy(media -> media.getOdsHasEntityRelationships().stream()
             .filter(er -> er.getDwcRelationshipOfResource().equals("hasDigitalSpecimen"))
             .map(er -> er.getOdsRelatedResourceURI().toString()).findFirst().orElseThrow()));
+    // We need to remove any media that does not have a corresponding digital specimen
+    // This is possible because a media item can be linked to multiple digital specimens
     specimenMediaMap.keySet().removeIf(id -> !digitalSpecimenIds.contains(id));
     return specimenMediaMap;
   }
