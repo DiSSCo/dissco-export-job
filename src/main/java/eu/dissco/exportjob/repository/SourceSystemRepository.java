@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 @Repository
-@Profile(Profiles.DWC_DP)
+@Profile({Profiles.DWC_DP, Profiles.DWCA})
 @RequiredArgsConstructor
 public class SourceSystemRepository {
 

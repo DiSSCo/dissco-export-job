@@ -14,6 +14,7 @@ import static org.mockito.BDDMockito.then;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
+import eu.dissco.exportjob.repository.SourceSystemRepository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,10 +41,12 @@ class DoiListServiceTest {
   private IndexProperties indexProperties;
   @Mock
   private Environment environment;
+  @Mock
+  private SourceSystemRepository sourceSystemRepository;
 
   @BeforeEach
   void init() {
-    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties, environment);
+    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties, environment, sourceSystemRepository);
   }
 
   @Test

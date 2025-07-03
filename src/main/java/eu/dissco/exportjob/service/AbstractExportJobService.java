@@ -9,9 +9,13 @@ import eu.dissco.exportjob.exceptions.S3UploadException;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
+import eu.dissco.exportjob.repository.SourceSystemRepository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +32,15 @@ public abstract class AbstractExportJobService {
   protected static final String PHYSICAL_ID_FIELD = "ods:physicalSpecimenID";
   private static final Map<String, String> extensionMap = Map.of(
       Profiles.DOI_LIST, ".csv.gz",
-      Profiles.DWC_DP, ".zip"
+      Profiles.DWC_DP, ".zip",
+      Profiles.DWCA, ".zip"
   );
   protected final ElasticSearchRepository elasticSearchRepository;
   protected final IndexProperties indexProperties;
   private final ExporterBackendClient exporterBackendClient;
   private final S3Repository s3Repository;
   private final Environment environment;
+  private final SourceSystemRepository sourceSystemRepository;
 
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
     try {
@@ -79,13 +85,29 @@ public abstract class AbstractExportJobService {
     return resultsProcessed > 0;
   }
 
+  protected String writeEmlFile(JobRequest jobRequest, FileSystem fs)
+      throws FailedProcessingException, IOException {
+    var sourceSystemOptional = jobRequest.searchParams().stream()
+        .filter(param -> param.inputField().contains("ods:sourceSystemID"))
+        .findFirst();
+    if (sourceSystemOptional.isEmpty()) {
+      throw new FailedProcessingException(
+          "Is a source system job, but no sourceSystemID provided: " + jobRequest.jobId());
+    }
+    var sourceSystemId = sourceSystemOptional.get().inputValue();
+    log.info("Retrieving EML for source system ID: {}", sourceSystemId);
+    var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
+    var sourceSystemFile = fs.getPath("eml.xml");
+    Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
+    return eml;
+  }
+
   protected abstract void writeHeaderToFile() throws IOException;
 
-  protected abstract void postProcessResults(JobRequest jobRequest) throws IOException, FailedProcessingException;
+  protected abstract void postProcessResults(JobRequest jobRequest)
+      throws IOException, FailedProcessingException;
 
   protected abstract void processSearchResults(List<JsonNode> searchResults) throws IOException;
-
-  protected abstract void writeResultsToFile(List<JsonNode> searchResults) throws IOException;
 
   protected abstract List<String> targetFields();
 

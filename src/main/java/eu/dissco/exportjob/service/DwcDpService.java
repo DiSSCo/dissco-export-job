@@ -13,6 +13,9 @@ import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_MEDIA;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MEDIA;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.OCCURRENCE;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.RELATIONSHIP;
+import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_IDENTIFIERS;
+import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_RELATIONSHIPS;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +55,7 @@ import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
-import eu.dissco.exportjob.utils.DwcDpUtils;
+import eu.dissco.exportjob.utils.ExportUtils;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -65,8 +68,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -88,7 +89,6 @@ public class DwcDpService extends AbstractExportJobService {
   private final DatabaseRepository databaseRepository;
   private final JobProperties jobProperties;
   private final DwcDpProperties dwcDpProperties;
-  private final SourceSystemRepository sourceSystemRepository;
   private final DataPackageComponent dataPackageComponent;
 
   public DwcDpService(
@@ -98,12 +98,11 @@ public class DwcDpService extends AbstractExportJobService {
       DwcDpProperties dwcDpProperties, Environment environment,
       SourceSystemRepository sourceSystemRepository, DataPackageComponent dataPackageComponent) {
     super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
-        environment);
+        environment, sourceSystemRepository);
     this.objectMapper = objectMapper;
     this.databaseRepository = databaseRepository;
     this.jobProperties = jobProperties;
     this.dwcDpProperties = dwcDpProperties;
-    this.sourceSystemRepository = sourceSystemRepository;
     this.dataPackageComponent = dataPackageComponent;
   }
 
@@ -129,8 +128,7 @@ public class DwcDpService extends AbstractExportJobService {
       throws IOException, ClassNotFoundException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
     var path = fs.getPath(value.getFileName());
     try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
-        StandardOpenOption.CREATE,
-        StandardOpenOption.APPEND)) {
+        StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
       var csvWriter = new StatefulBeanToCsvBuilder<>(writer).build();
       for (byte[] byteArray : records) {
         var bais = new ByteArrayInputStream(byteArray);
@@ -229,22 +227,7 @@ public class DwcDpService extends AbstractExportJobService {
     Files.writeString(dataPackageFile, dataPackageString, StandardCharsets.UTF_8);
   }
 
-  private String writeEmlFile(JobRequest jobRequest, FileSystem fs)
-      throws FailedProcessingException, IOException {
-    var sourceSystemOptional = jobRequest.searchParams().stream()
-        .filter(param -> param.inputField().contains("ods:sourceSystemID"))
-        .findFirst();
-    if (sourceSystemOptional.isEmpty()) {
-      throw new FailedProcessingException(
-          "Is a source system job, but no sourceSystemID provided: " + jobRequest.jobId());
-    }
-    var sourceSystemId = sourceSystemOptional.get().inputValue();
-    log.info("Retrieving EML for source system ID: {}", sourceSystemId);
-    var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
-    var sourceSystemFile = fs.getPath("eml.xml");
-    Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
-    return eml;
-  }
+
 
   private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs)
       throws FailedProcessingException {
@@ -314,11 +297,6 @@ public class DwcDpService extends AbstractExportJobService {
         databaseRepository.insertRecords(tableName, dwcDpClassesListEntry.getValue());
       }
     }
-  }
-
-  @Override
-  protected void writeResultsToFile(List<JsonNode> searchResults) {
-    throw new UnsupportedOperationException("This method is not supported for DwC-DP exports");
   }
 
   @Override
@@ -395,10 +373,9 @@ public class DwcDpService extends AbstractExportJobService {
 
   private void mapRelationships(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
-    var excludeRelationships = List.of("hasDigitalMedia", "hasOrganisationID", "hasSourceSystemID",
-        "hasFDOType", "hasPhysicalIdentifier", "hasLicense", "hasCOLID", "hasCollectionID");
+
     digitalSpecimen.getOdsHasEntityRelationships().stream()
-        .filter(er -> !excludeRelationships.contains(er.getDwcRelationshipOfResource())).forEach(
+        .filter(er -> !EXCLUDE_RELATIONSHIPS.contains(er.getDwcRelationshipOfResource())).forEach(
             odsHasEntityRelationship -> mapRelationship(digitalSpecimen, results,
                 odsHasEntityRelationship)
         );
@@ -465,7 +442,7 @@ public class DwcDpService extends AbstractExportJobService {
       role.setIdentificationID(identificationId);
       role.setAgentRole(odsHasRole.getSchemaRoleName());
       role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
-      role.setAgentRoleDate(DwcDpUtils.parseAgentDate(odsHasRole));
+      role.setAgentRoleDate(ExportUtils.parseAgentDate(odsHasRole));
       results.get(IDENTIFICATION_AGENT).add(Pair.of(generateHashID(role.toString()), role));
     }
   }
@@ -500,19 +477,15 @@ public class DwcDpService extends AbstractExportJobService {
     material.setCollectionID(digitalSpecimen.getDwcCollectionID());
     material.setPreparations(digitalSpecimen.getDwcPreparations());
     material.setDisposition(digitalSpecimen.getDwcDisposition());
-    material.setCatalogNumber(retrieveSpecificIdentifier(digitalSpecimen, "dwc:catalogNumber"));
-    material.setRecordNumber(retrieveSpecificIdentifier(digitalSpecimen, "dwc:recordNumber"));
+    material.setCatalogNumber(retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber"));
+    material.setRecordNumber(retrieveIdentifier(digitalSpecimen, "dwc:recordNumber"));
     material.setVerbatimLabel(digitalSpecimen.getDwcVerbatimLabel());
     material.setInformationWithheld(digitalSpecimen.getDwcInformationWithheld());
     material.setDataGeneralizations(digitalSpecimen.getDwcDataGeneralizations());
     results.get(MATERIAL).add(Pair.of(material.getMaterialEntityID(), material));
   }
 
-  private String retrieveSpecificIdentifier(DigitalSpecimen digitalSpecimen, String identifierTitle) {
-    return digitalSpecimen.getOdsHasIdentifiers().stream()
-        .filter(identifier -> identifierTitle.equals(identifier.getDctermsTitle())).map(
-            Identifier::getDctermsIdentifier).findFirst().orElse(null);
-  }
+
 
   private void mapOccurrence(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
@@ -667,16 +640,15 @@ public class DwcDpService extends AbstractExportJobService {
       role.setEventID(eventId);
       role.setAgentRole(odsHasRole.getSchemaRoleName());
       role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
-      role.setAgentRoleDate(DwcDpUtils.parseAgentDate(odsHasRole));
+      role.setAgentRoleDate(ExportUtils.parseAgentDate(odsHasRole));
       results.get(EVENT_AGENT).add(Pair.of(generateHashID(role.toString()), role));
     }
   }
 
   private void mapIdentifiers(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
-    var excludeIdentifiers = List.of("dwc:catalogNumber", "dwca:ID", "dwc:recordNumber");
     digitalSpecimen.getOdsHasIdentifiers().stream()
-        .filter(id -> !excludeIdentifiers.contains(id.getDctermsTitle())).forEach(
+        .filter(id -> !EXCLUDE_IDENTIFIERS.contains(id.getDctermsTitle())).forEach(
             identifier -> mapIdentifier(digitalSpecimen, results, identifier)
         );
   }

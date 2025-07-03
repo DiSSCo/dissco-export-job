@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
 
 @Slf4j
 @Repository
-@Profile(Profiles.DWC_DP)
+@Profile({Profiles.DWC_DP, Profiles.DWCA})
 @RequiredArgsConstructor
 public class DatabaseRepository {
 
