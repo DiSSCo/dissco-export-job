@@ -69,6 +69,13 @@ public class DwcaService extends AbstractExportJobService {
     this.dwcaZipWriter = dwcaZipWriter;
   }
 
+  private static String getStringValue(Object object) {
+    if (object == null) {
+      return null;
+    }
+    return String.valueOf(object);
+  }
+
   @Override
   protected void writeHeaderToFile() throws IOException {
     log.debug("This method is not required for DWCA exports");
@@ -150,16 +157,16 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.eventDate, event.getDwcEventDate()));
     occurrenceRecord.add(Pair.of(DwcTerm.eventTime, event.getDwcEventTime()));
     occurrenceRecord.add(
-        Pair.of(DwcTerm.startDayOfYear, String.valueOf(event.getDwcStartDayOfYear())));
-    occurrenceRecord.add(Pair.of(DwcTerm.endDayOfYear, String.valueOf(event.getDwcEndDayOfYear())));
-    occurrenceRecord.add(Pair.of(DwcTerm.year, String.valueOf(event.getDwcYear())));
-    occurrenceRecord.add(Pair.of(DwcTerm.month, String.valueOf(event.getDwcMonth())));
-    occurrenceRecord.add(Pair.of(DwcTerm.day, String.valueOf(event.getDwcDay())));
+        Pair.of(DwcTerm.startDayOfYear, getStringValue(event.getDwcStartDayOfYear())));
+    occurrenceRecord.add(Pair.of(DwcTerm.endDayOfYear, getStringValue(event.getDwcEndDayOfYear())));
+    occurrenceRecord.add(Pair.of(DwcTerm.year, getStringValue(event.getDwcYear())));
+    occurrenceRecord.add(Pair.of(DwcTerm.month, getStringValue(event.getDwcMonth())));
+    occurrenceRecord.add(Pair.of(DwcTerm.day, getStringValue(event.getDwcDay())));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimEventDate, event.getDwcVerbatimEventDate()));
     occurrenceRecord.add(Pair.of(DwcTerm.habitat, event.getDwcHabitat()));
     occurrenceRecord.add(Pair.of(DwcTerm.samplingProtocol, event.getDwcSamplingProtocol()));
     occurrenceRecord.add(
-        Pair.of(DwcTerm.sampleSizeValue, String.valueOf(event.getDwcSampleSizeValue())));
+        Pair.of(DwcTerm.sampleSizeValue, getStringValue(event.getDwcSampleSizeValue())));
     occurrenceRecord.add(Pair.of(DwcTerm.sampleSizeUnit, event.getDwcSampleSizeUnit()));
     occurrenceRecord.add(Pair.of(DwcTerm.samplingEffort, event.getDwcSamplingEffort()));
     occurrenceRecord.add(Pair.of(DwcTerm.fieldNotes, event.getDwcFieldNotes()));
@@ -184,19 +191,19 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.locality, location.getDwcLocality()));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimLocality, location.getDwcVerbatimLocality()));
     occurrenceRecord.add(Pair.of(DwcTerm.minimumElevationInMeters,
-        String.valueOf(location.getDwcMinimumElevationInMeters())));
+        getStringValue(location.getDwcMinimumElevationInMeters())));
     occurrenceRecord.add(Pair.of(DwcTerm.maximumElevationInMeters,
-        String.valueOf(location.getDwcMaximumElevationInMeters())));
+        getStringValue(location.getDwcMaximumElevationInMeters())));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimElevation, location.getDwcVerbatimElevation()));
     occurrenceRecord.add(Pair.of(DwcTerm.minimumDepthInMeters,
-        String.valueOf(location.getDwcMinimumDepthInMeters())));
+        getStringValue(location.getDwcMinimumDepthInMeters())));
     occurrenceRecord.add(Pair.of(DwcTerm.maximumDepthInMeters,
-        String.valueOf(location.getDwcMaximumDepthInMeters())));
+        getStringValue(location.getDwcMaximumDepthInMeters())));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimDepth, location.getDwcVerbatimDepth()));
     occurrenceRecord.add(Pair.of(DwcTerm.maximumDistanceAboveSurfaceInMeters,
-        String.valueOf(location.getDwcMaximumDistanceAboveSurfaceInMeters())));
+        getStringValue(location.getDwcMaximumDistanceAboveSurfaceInMeters())));
     occurrenceRecord.add(Pair.of(DwcTerm.minimumDistanceAboveSurfaceInMeters,
-        String.valueOf(location.getDwcMinimumDistanceAboveSurfaceInMeters())));
+        getStringValue(location.getDwcMinimumDistanceAboveSurfaceInMeters())));
     occurrenceRecord.add(
         Pair.of(DwcTerm.locationAccordingTo, location.getDwcLocationAccordingTo()));
     occurrenceRecord.add(Pair.of(DwcTerm.locationRemarks, location.getDwcLocationRemarks()));
@@ -294,14 +301,14 @@ public class DwcaService extends AbstractExportJobService {
     mediaRecord.add(
         Pair.of(AcTerm.resourceCreationTechnique, media.getAcResourceCreationTechnique()));
     mediaRecord.add(Pair.of(AcTerm.accessURI, media.getAcAccessURI()));
-    mediaRecord.add(Pair.of(AcTerm.frameRate, String.valueOf(media.getAcFrameRate())));
+    mediaRecord.add(Pair.of(AcTerm.frameRate, getStringValue(media.getAcFrameRate())));
     mediaRecord.add(Pair.of(AcTerm.variantLiteral, media.getAcVariantLiteral()));
     mediaRecord.add(Pair.of(AcTerm.variant, media.getAcVariant()));
     mediaRecord.add(Pair.of(AcTerm.variantDescription, media.getAcVariantDescription()));
     mediaRecord.add(
-        Pair.of(ExifTerm.PixelXDimension, String.valueOf(media.getExifPixelXDimension())));
+        Pair.of(ExifTerm.PixelXDimension, getStringValue(media.getExifPixelXDimension())));
     mediaRecord.add(
-        Pair.of(ExifTerm.PixelYDimension, String.valueOf(media.getExifPixelYDimension())));
+        Pair.of(ExifTerm.PixelYDimension, getStringValue(media.getExifPixelYDimension())));
     return mediaRecord;
   }
 
@@ -381,11 +388,14 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceList.add(Pair.of(DwcTerm.dataGeneralizations,
         digitalSpecimen.getDwcDataGeneralizations()));
     occurrenceList.add(Pair.of(DwcTerm.occurrenceID,
-        retrieveIdentifier(digitalSpecimen, "dwc:occurrenceID")));
+        retrieveIdentifier(digitalSpecimen,
+            List.of("dwc:occurrenceID", "abcd:unitGUID", "abcd:unitID"))));
     occurrenceList.add(Pair.of(DwcTerm.catalogNumber,
-        retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber")));
+        retrieveIdentifier(digitalSpecimen, List.of("dwc:catalogNumber", "abcd:unitID"))));
     occurrenceList.add(Pair.of(DwcTerm.recordedBy,
         retrieveCombinedAgentName(digitalSpecimen.getOdsHasAgents(), "collector")));
+    occurrenceList.add(Pair.of(DwcTerm.recordNumber,
+        retrieveIdentifier(digitalSpecimen, List.of("dwc:recordNumber", "abcd:recordURI"))));
     occurrenceList.add(Pair.of(DwcTerm.recordedByID,
         retrieveCombinedAgentId(digitalSpecimen.getOdsHasAgents(), "collector")));
     occurrenceList.add(Pair.of(DwcTerm.organismQuantity, digitalSpecimen.getDwcOrganismQuantity()));
@@ -405,16 +415,16 @@ public class DwcaService extends AbstractExportJobService {
   private void mapGeoreference(Georeference georeference,
       ArrayList<Pair<Term, String>> occurrenceRecord) {
     occurrenceRecord.add(
-        Pair.of(DwcTerm.decimalLatitude, String.valueOf(georeference.getDwcDecimalLatitude())));
+        Pair.of(DwcTerm.decimalLatitude, getStringValue(georeference.getDwcDecimalLatitude())));
     occurrenceRecord.add(
-        Pair.of(DwcTerm.decimalLongitude, String.valueOf(georeference.getDwcDecimalLongitude())));
+        Pair.of(DwcTerm.decimalLongitude, getStringValue(georeference.getDwcDecimalLongitude())));
     occurrenceRecord.add(Pair.of(DwcTerm.geodeticDatum, georeference.getDwcGeodeticDatum()));
     occurrenceRecord.add(Pair.of(DwcTerm.coordinateUncertaintyInMeters,
-        String.valueOf(georeference.getDwcCoordinateUncertaintyInMeters())));
+        getStringValue(georeference.getDwcCoordinateUncertaintyInMeters())));
     occurrenceRecord.add(Pair.of(DwcTerm.coordinatePrecision,
-        String.valueOf(georeference.getDwcCoordinatePrecision())));
+        getStringValue(georeference.getDwcCoordinatePrecision())));
     occurrenceRecord.add(Pair.of(DwcTerm.pointRadiusSpatialFit,
-        String.valueOf(georeference.getDwcPointRadiusSpatialFit())));
+        getStringValue(georeference.getDwcPointRadiusSpatialFit())));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimCoordinates,
         georeference.getDwcVerbatimCoordinates()));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimLatitude, georeference.getDwcVerbatimLatitude()));
@@ -426,7 +436,7 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.footprintWKT, georeference.getDwcFootprintWKT()));
     occurrenceRecord.add(Pair.of(DwcTerm.footprintSRS, georeference.getDwcFootprintSRS()));
     occurrenceRecord.add(Pair.of(DwcTerm.footprintSpatialFit,
-        String.valueOf(georeference.getDwcFootprintSpatialFit())));
+        getStringValue(georeference.getDwcFootprintSpatialFit())));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferencedBy,
         retrieveCombinedAgentName(georeference.getOdsHasAgents(), null)));
     occurrenceRecord.add(
@@ -469,7 +479,7 @@ public class DwcaService extends AbstractExportJobService {
     identificationRecord.add(Pair.of(DwcTerm.dateIdentified,
         identification.getDwcDateIdentified()));
     identificationRecord.add(Pair.of(DwcTerm.identificationVerificationStatus,
-        String.valueOf(identification.getOdsIsVerifiedIdentification())));
+        getStringValue(identification.getOdsIsVerifiedIdentification())));
     identificationRecord.add(Pair.of(DwcTerm.identificationRemarks,
         identification.getDwcIdentificationRemarks()));
     identificationRecord.add(Pair.of(DwcTerm.taxonID, taxonIdentification.getDwcTaxonID()));

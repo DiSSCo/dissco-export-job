@@ -228,7 +228,6 @@ public class DwcDpService extends AbstractExportJobService {
   }
 
 
-
   private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs)
       throws FailedProcessingException {
     int start = 0;
@@ -477,14 +476,15 @@ public class DwcDpService extends AbstractExportJobService {
     material.setCollectionID(digitalSpecimen.getDwcCollectionID());
     material.setPreparations(digitalSpecimen.getDwcPreparations());
     material.setDisposition(digitalSpecimen.getDwcDisposition());
-    material.setCatalogNumber(retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber"));
-    material.setRecordNumber(retrieveIdentifier(digitalSpecimen, "dwc:recordNumber"));
+    material.setCatalogNumber(
+        retrieveIdentifier(digitalSpecimen, List.of("dwc:catalogNumber", "abcd:unitID")));
+    material.setRecordNumber(
+        retrieveIdentifier(digitalSpecimen, List.of("dwc:recordNumber", "abcd:recordURI")));
     material.setVerbatimLabel(digitalSpecimen.getDwcVerbatimLabel());
     material.setInformationWithheld(digitalSpecimen.getDwcInformationWithheld());
     material.setDataGeneralizations(digitalSpecimen.getDwcDataGeneralizations());
     results.get(MATERIAL).add(Pair.of(material.getMaterialEntityID(), material));
   }
-
 
 
   private void mapOccurrence(DigitalSpecimen digitalSpecimen,
