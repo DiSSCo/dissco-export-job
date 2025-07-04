@@ -22,6 +22,30 @@ class ExportUtilsTest {
         .withDctermsTitle(title);
   }
 
+  private static Stream<Arguments> sourceRetrieveIdentifier() {
+    return Stream.of(
+        Arguments.of(List.of("dwc:catalogNumber"), "12345"),
+        Arguments.of(List.of("abcd:guid", "dwc:catalogueNumber"), "7890"),
+        Arguments.of(List.of("abcd:recordURI"), null)
+    );
+  }
+
+  private static Stream<Arguments> sourceRetrieveAgentNames() {
+    return Stream.of(
+        Arguments.of(null, "collector", null),
+        Arguments.of(List.of(), null, null),
+        Arguments.of(generateAgentList(), "collector", "agent1"),
+        Arguments.of(generateAgentList(), null, "agent1 | agent2")
+    );
+  }
+
+  private static List<Agent> generateAgentList() {
+    var agent1 = new Agent().withSchemaIdentifier("agent1").withSchemaName("agent1")
+        .withOdsHasRoles(List.of(new OdsHasRole().withSchemaRoleName("collector")));
+    var agent2 = new Agent().withSchemaIdentifier("agent2").withSchemaName("agent2");
+    return List.of(agent1, agent2);
+  }
+
   @Test
   void parseAgentDate() {
     // Given
@@ -74,24 +98,25 @@ class ExportUtilsTest {
     assertThat(result).isNull();
   }
 
-  @Test
-  void testRetrieveSpecificIdentifier() {
+  @ParameterizedTest
+  @MethodSource("sourceRetrieveIdentifier")
+  void testRetrieveIdentifier(List<String> identifierTitles, String expected) {
     // Given
-    var id = "12456";
     var digitalSpecimen = new DigitalSpecimen();
     digitalSpecimen.setOdsHasIdentifiers(
-        List.of(givenIdentifier(id, "dwc:catalogNumber"), givenIdentifier("7890", "anotherID")));
+        List.of(givenIdentifier("12345", "dwc:catalogNumber"),
+            givenIdentifier("7890", "abcd:guid")));
 
     // When
-    var result = ExportUtils.retrieveIdentifier(digitalSpecimen, "dwc:catalogNumber");
+    var result = ExportUtils.retrieveIdentifier(digitalSpecimen, identifierTitles);
 
     // Then
-    assertThat(result).isEqualTo(id);
+    assertThat(result).isEqualTo(expected);
   }
 
   @ParameterizedTest
   @MethodSource("sourceRetrieveAgentNames")
-  void testRetrieveAgentIds(List<Agent> agents, String role, String expected) {
+  void testRetrieveCombinedAgentId(List<Agent> agents, String role, String expected) {
     // Given
 
     // When
@@ -103,7 +128,7 @@ class ExportUtilsTest {
 
   @ParameterizedTest
   @MethodSource("sourceRetrieveAgentNames")
-  void testRetrieveAgentNames(List<Agent> agents, String role, String expected) {
+  void testRetrieveCombinedAgentName(List<Agent> agents, String role, String expected) {
     // Given
 
     // When
@@ -111,21 +136,6 @@ class ExportUtilsTest {
 
     // Then
     assertThat(result).isEqualTo(expected);
-  }
-
-  private static Stream<Arguments> sourceRetrieveAgentNames() {
-    return Stream.of(
-        Arguments.of(null, "collector", null),
-        Arguments.of(List.of(), null, null),
-        Arguments.of(generateAgentList(), "collector", "agent1"),
-        Arguments.of(generateAgentList(), null, "agent1 | agent2")
-    );
-  }
-
-  private static List<Agent> generateAgentList() {
-    var agent1 = new Agent().withSchemaIdentifier("agent1").withSchemaName("agent1").withOdsHasRoles(List.of(new OdsHasRole().withSchemaRoleName("collector")));
-    var agent2 = new Agent().withSchemaIdentifier("agent2").withSchemaName("agent2");
-    return List.of(agent1, agent2);
   }
 
 }

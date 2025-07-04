@@ -95,7 +95,7 @@ public class DwcaZipWriter {
     var writerInfo = writers.get(rowType);
     var maxMappingColumn = writerInfo.getRight();
     var writer = writerInfo.getLeft();
-    if (row.length != maxMappingColumn) {
+    if (row.length > maxMappingColumn) {
       throw new IllegalArgumentException(
           "Input rows are not equal to the defined mapping of " + maxMappingColumn + " columns.");
     }
