@@ -57,25 +57,19 @@ public class DwcaService extends AbstractExportJobService {
 
   public static final Predicate<DigitalSpecimen> EVENT_CHECK = ds -> ds.getOdsHasEvents() == null
       || ds.getOdsHasEvents().isEmpty();
+  public static final Predicate<DigitalSpecimen> LOCATION_CHECK = EVENT_CHECK.or(
+      ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation() == null);
+  public static final Predicate<DigitalSpecimen> GEOLOGICAL_CONTEXT_CHECK = LOCATION_CHECK.or(
+      ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeologicalContext()
+          == null);
+  public static final Predicate<DigitalSpecimen> GEOREFERENCE_CHECK = LOCATION_CHECK.or(ds ->
+      ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference() == null);
   public static final Function<DigitalSpecimen, Object> EVENT_GET = ds -> ds.getOdsHasEvents()
       .getFirst();
-  public static final Predicate<DigitalSpecimen> LOCATION_CHECK = ds ->
-      ds.getOdsHasEvents() == null || ds.getOdsHasEvents().isEmpty()
-          || ds.getOdsHasEvents().getFirst().getOdsHasLocation() == null;
   public static final Function<DigitalSpecimen, Object> LOCATION_GET = ds -> ds.getOdsHasEvents()
       .getFirst().getOdsHasLocation();
-  public static final Predicate<DigitalSpecimen> GEOLOGICAL_CONTEXT_CHECK = ds ->
-      ds.getOdsHasEvents() == null || ds.getOdsHasEvents().isEmpty()
-          || ds.getOdsHasEvents().getFirst().getOdsHasLocation() == null
-          || ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeologicalContext()
-          == null;
   public static final Function<DigitalSpecimen, Object> GEOLOGICAL_CONTEXT_GET = ds -> ds.getOdsHasEvents()
       .getFirst().getOdsHasLocation().getOdsHasGeologicalContext();
-  public static final Predicate<DigitalSpecimen> GEOREFERENCE_CHECK = ds ->
-      ds.getOdsHasEvents() == null || ds.getOdsHasEvents().isEmpty()
-          || ds.getOdsHasEvents().getFirst().getOdsHasLocation() == null
-          || ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference()
-          == null;
   public static final Function<DigitalSpecimen, Object> GEOREFERENCE_GET = ds -> ds.getOdsHasEvents()
       .getFirst().getOdsHasLocation().getOdsHasGeoreference();
 
