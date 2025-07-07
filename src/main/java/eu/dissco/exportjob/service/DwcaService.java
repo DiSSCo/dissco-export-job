@@ -165,7 +165,7 @@ public class DwcaService extends AbstractExportJobService {
     occurrenceRecord.add(Pair.of(DwcTerm.sex,
         retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcSex")));
     occurrenceRecord.add(
-        Pair.of(DwcTerm.sex,
+        Pair.of(DwcTerm.lifeStage,
             retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcLifeStage")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.reproductiveCondition,

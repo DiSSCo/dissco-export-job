@@ -1,5 +1,5 @@
 # Export Job
-The exprot job repository contains several job that generate an export product.
+The export job repository contains several job that generate an export product.
 This repository is closely associated with the exporter-backend which schedules the jobs.
 Within this repository you can find multiple jobs, the profiles will show which jobs are available.
 The jobs share the AbstractExportJobService class and are triggered through the ProjectRunner.
@@ -28,7 +28,7 @@ This is why we use some magic to always include fields that are mapped to a ods:
 ## DwC-DP
 This job contains some additional complexity as we need to potentially deduplicate records.
 This means that when the job is started we will create some temporary database tables.
-Just as the other jobs we will paginate over elatic and retrieve all data, after which we will also collect any media associated with the specimen.
+Just as the other jobs we will paginate over elastic and retrieve all data, after which we will also collect any media associated with the specimen.
 We then parse this to DwC-DP records and we generate any identifiers when they are not present.
 These identifiers are essential in creating the linkages between the different files in the DwC-DP.
 The generate identifiers are based on the data in the object (essential for deduplication) and we use an MD5 hash.
