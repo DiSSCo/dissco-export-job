@@ -62,7 +62,8 @@ public abstract class AbstractExportJobService {
     }
   }
 
-  protected boolean processRequest(JobRequest jobRequest) throws IOException {
+  protected boolean processRequest(JobRequest jobRequest)
+      throws IOException, FailedProcessingException {
     String lastId = null;
     writeHeaderToFile();
     boolean keepSearching = true;
@@ -107,7 +108,8 @@ public abstract class AbstractExportJobService {
   protected abstract void postProcessResults(JobRequest jobRequest)
       throws IOException, FailedProcessingException;
 
-  protected abstract void processSearchResults(List<JsonNode> searchResults) throws IOException;
+  protected abstract void processSearchResults(List<JsonNode> searchResults)
+      throws IOException, FailedProcessingException;
 
   protected abstract List<String> targetFields();
 

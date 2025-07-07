@@ -1,13 +1,17 @@
 package eu.dissco.exportjob.utils;
 
+import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.schema.Agent;
 import eu.dissco.exportjob.schema.DigitalSpecimen;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class ExportUtils {
 
@@ -78,6 +82,30 @@ public class ExportUtils {
       }
     }
     return String.join(" | ", agentNames);
+  }
+
+  public static String retrieveTerm(DigitalSpecimen digitalSpecimen, Predicate<DigitalSpecimen> condition,
+      Function<DigitalSpecimen, Object> extractor, String methodName)
+      throws FailedProcessingException {
+    if (condition.test(digitalSpecimen)) {
+      return null;
+    }
+    var event = extractor.apply(digitalSpecimen);
+    return retrieveValueFromClass(event, methodName);
+  }
+
+  private static String retrieveValueFromClass(Object classInstance, String methodName)
+      throws FailedProcessingException {
+    try {
+      var method = classInstance.getClass().getMethod(methodName);
+      var result = method.invoke(classInstance);
+      if (result != null) {
+        return String.valueOf(result);
+      }
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw new FailedProcessingException("Failed to retrieve value from class", e);
+    }
+    return null;
   }
 
 }
