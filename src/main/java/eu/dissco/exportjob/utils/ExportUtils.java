@@ -2,6 +2,7 @@ package eu.dissco.exportjob.utils;
 
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.schema.Agent;
+import eu.dissco.exportjob.schema.Citation;
 import eu.dissco.exportjob.schema.DigitalSpecimen;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
@@ -12,6 +13,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ExportUtils {
 
@@ -55,7 +57,7 @@ public class ExportUtils {
       return null;
     }
     List<String> agentIds = new ArrayList<>();
-    for (Agent agent : odsHasAgents) {
+    for (var agent : odsHasAgents) {
       if (roleName == null || agent.getOdsHasRoles().stream()
           .anyMatch(role -> role.getSchemaRoleName().equals(roleName))) {
         String agentId = agent.getSchemaIdentifier();
@@ -72,7 +74,7 @@ public class ExportUtils {
       return null;
     }
     List<String> agentNames = new ArrayList<>();
-    for (Agent agent : odsHasAgents) {
+    for (var agent : odsHasAgents) {
       if (roleName == null || agent.getOdsHasRoles().stream()
           .anyMatch(role -> role.getSchemaRoleName().equals(roleName))) {
         String agentName = agent.getSchemaName();
@@ -84,7 +86,19 @@ public class ExportUtils {
     return String.join(" | ", agentNames);
   }
 
-  public static String retrieveTerm(DigitalSpecimen digitalSpecimen, Predicate<DigitalSpecimen> condition,
+
+  public static String retrieveCombinedCitation(List<Citation> odsHasCitation) {
+    if (odsHasCitation == null || odsHasCitation.isEmpty()) {
+      return null;
+    }
+    return odsHasCitation.stream()
+        .map(Citation::getDctermsBibliographicCitation)
+        .filter(Objects::nonNull)
+        .collect(Collectors.joining(" | "));
+  }
+
+  public static String retrieveTerm(DigitalSpecimen digitalSpecimen,
+      Predicate<DigitalSpecimen> condition,
       Function<DigitalSpecimen, Object> extractor, String methodName)
       throws FailedProcessingException {
     if (condition.test(digitalSpecimen)) {
@@ -106,6 +120,13 @@ public class ExportUtils {
       throw new FailedProcessingException("Failed to retrieve value from class", e);
     }
     return null;
+  }
+
+  public static String convertValueToString(Object value) {
+    if (value == null) {
+      return null;
+    }
+    return String.valueOf(value);
   }
 
 }

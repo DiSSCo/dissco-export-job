@@ -2,19 +2,31 @@ package eu.dissco.exportjob.service;
 
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.AGENT;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.AGENT_IDENTIFIER;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.CHRONOMETRIC_AGE;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.CHRONOMETRIC_AGE_AGENT;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.EVENT;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.EVENT_AGENT;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.EVENT_ASSERTION;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.GEOLOGICAL_CONTEXT;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.IDENTIFICATION;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.IDENTIFICATION_AGENT;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.IDENTIFICATION_TAXON;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_ASSERTION;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_IDENTIFIER;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_MEDIA;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_REFERENCE;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MEDIA;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.OCCURRENCE;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.REFERENCE;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.RELATIONSHIP;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_IDENTIFIERS;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_RELATIONSHIPS;
+import static eu.dissco.exportjob.utils.ExportUtils.convertValueToString;
+import static eu.dissco.exportjob.utils.ExportUtils.parseAgentDate;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentId;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentName;
+import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedCitation;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,15 +40,22 @@ import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgentIdentifier;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpChronometricAge;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpChronometricAgeAgent;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpEvent;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpEventAgent;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpEventAssertion;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpGeologicalContext;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpIdentification;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpIdentificationAgent;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialAssertion;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialIdentifier;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialMedia;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialReference;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMedia;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpOccurrence;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpReference;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpRelationship;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpTaxonIdentification;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
@@ -55,7 +74,6 @@ import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
-import eu.dissco.exportjob.utils.ExportUtils;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -121,6 +139,13 @@ public class DwcDpService extends AbstractExportJobService {
     tableMap.put(RELATIONSHIP, new ArrayList<>());
     tableMap.put(MATERIAL_MEDIA, new ArrayList<>());
     tableMap.put(MEDIA, new ArrayList<>());
+    tableMap.put(MATERIAL_ASSERTION, new ArrayList<>());
+    tableMap.put(EVENT_ASSERTION, new ArrayList<>());
+    tableMap.put(MATERIAL_REFERENCE, new ArrayList<>());
+    tableMap.put(REFERENCE, new ArrayList<>());
+    tableMap.put(GEOLOGICAL_CONTEXT, new ArrayList<>());
+    tableMap.put(CHRONOMETRIC_AGE, new ArrayList<>());
+    tableMap.put(CHRONOMETRIC_AGE_AGENT, new ArrayList<>());
     return tableMap;
   }
 
@@ -310,13 +335,179 @@ public class DwcDpService extends AbstractExportJobService {
             digitalSpecimen -> {
               var eventId = mapEvent(digitalSpecimen, results);
               mapMaterial(digitalSpecimen, results, eventId);
+              mapChronometricAge(digitalSpecimen, results, eventId);
               mapIdentifiers(digitalSpecimen, results);
               mapOccurrence(digitalSpecimen, results);
               mapIdentification(digitalSpecimen, results);
               mapRelationships(digitalSpecimen, results);
               mapMaterialMedia(digitalSpecimen, results);
+              mapMaterialAssertion(digitalSpecimen, results);
+              mapMaterialReference(digitalSpecimen, results);
             }
         );
+  }
+
+  private void mapChronometricAge(DigitalSpecimen digitalSpecimen,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results, String eventId) {
+    if (digitalSpecimen.getOdsHasChronometricAges() != null
+        && !digitalSpecimen.getOdsHasChronometricAges().isEmpty()) {
+      for (var odsHasChronometricAge : digitalSpecimen.getOdsHasChronometricAges()) {
+        var chronometricAge = new DwcDpChronometricAge();
+        chronometricAge.setChronometricAgeID(odsHasChronometricAge.getChronoChronometricAgeID());
+        chronometricAge.setEventID(eventId);
+        chronometricAge.setVerbatimChronometricAge(
+            odsHasChronometricAge.getChronoVerbatimChronometricAge());
+        chronometricAge.setChronometricAgeProtocol(
+            odsHasChronometricAge.getChronoChronometricAgeProtocol());
+        chronometricAge.setUncalibratedChronometricAge(
+            odsHasChronometricAge.getChronoUncalibratedChronometricAge());
+        chronometricAge.setChronometricAgeConversionProtocol(
+            odsHasChronometricAge.getChronoChronometricAgeConversionProtocol());
+        chronometricAge.setEarliestChronometricAge(
+            convertValueToString(odsHasChronometricAge.getChronoEarliestChronometricAge()));
+        chronometricAge.setEarliestChronometricAgeReferenceSystem(
+            odsHasChronometricAge.getChronoEarliestChronometricAgeReferenceSystem());
+        chronometricAge.setLatestChronometricAge(
+            convertValueToString(odsHasChronometricAge.getChronoLatestChronometricAge()));
+        chronometricAge.setLatestChronometricAgeReferenceSystem(
+            odsHasChronometricAge.getChronoLatestChronometricAgeReferenceSystem());
+        chronometricAge.setChronometricAgeUncertaintyInYears(
+            odsHasChronometricAge.getChronoChronometricAgeUncertaintyInYears());
+        chronometricAge.setChronometricAgeUncertaintyMethod(
+            odsHasChronometricAge.getChronoChronometricAgeUncertaintyMethod());
+        chronometricAge.setMaterialDated(odsHasChronometricAge.getChronoMaterialDated());
+        chronometricAge.setMaterialDatedID(odsHasChronometricAge.getChronoMaterialDatedID());
+        chronometricAge.setMaterialDatedRelationship(
+            odsHasChronometricAge.getChronoMaterialDatedRelationship());
+        chronometricAge.setChronometricAgeDeterminedBy(
+            retrieveCombinedAgentName(odsHasChronometricAge.getOdsHasAgents(), null));
+        chronometricAge.setChronometricAgeDeterminedByID(
+            retrieveCombinedAgentId(odsHasChronometricAge.getOdsHasAgents(), null));
+        chronometricAge.setChronometricAgeDeterminedDate(
+            odsHasChronometricAge.getChronoChronometricAgeDeterminedDate());
+        chronometricAge.setChronometricAgeReferences(
+            odsHasChronometricAge.getChronoChronometricAgeReferences());
+        chronometricAge.setChronometricAgeRemarks(
+            odsHasChronometricAge.getChronoChronometricAgeRemarks());
+        if (chronometricAge.getChronometricAgeID() == null) {
+          chronometricAge.setChronometricAgeID(generateHashID(chronometricAge.toString()));
+        }
+        results.get(CHRONOMETRIC_AGE)
+            .add(Pair.of(chronometricAge.getChronometricAgeID(), chronometricAge));
+        mapChronometricAgeAgents(odsHasChronometricAge.getOdsHasAgents(),
+            chronometricAge.getChronometricAgeID(), results);
+      }
+    }
+  }
+
+  private void mapChronometricAgeAgents(List<Agent> odsHasAgents, String chronometricAgeID,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    if (odsHasAgents != null && !odsHasAgents.isEmpty()) {
+      for (var odsAgent : odsHasAgents) {
+        var agent = mapAgent(odsAgent);
+        results.get(AGENT).add(Pair.of(agent.getAgentID(), agent));
+        mapChronometricAgeAgentRole(odsAgent, chronometricAgeID, agent.getAgentID(), results);
+        mapAgentIdentifier(odsAgent, agent.getAgentID(), results);
+      }
+    }
+  }
+
+  private void mapChronometricAgeAgentRole(Agent odsAgent, String chronometricAgeID, String agentID,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    for (var odsHasRole : odsAgent.getOdsHasRoles()) {
+      var role = new DwcDpChronometricAgeAgent();
+      role.setAgentID(agentID);
+      role.setChronometricAgeID(chronometricAgeID);
+      role.setAgentRole(odsHasRole.getSchemaRoleName());
+      role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
+      role.setAgentRoleDate(parseAgentDate(odsHasRole));
+      results.get(CHRONOMETRIC_AGE_AGENT)
+          .add(Pair.of(generateHashID(role.toString()), role));
+    }
+  }
+
+  private DwcDpAgent mapAgent(Agent odsAgent) {
+    var agent = new DwcDpAgent();
+    agent.setAgentID(odsAgent.getId());
+    if (odsAgent.getType() != null) {
+      agent.setAgentType(odsAgent.getType().toString());
+    }
+    agent.setAgentTypeVocabulary("https://schema.org/agent");
+    agent.setPreferredAgentName(odsAgent.getSchemaName());
+    if (agent.getAgentID() == null) {
+      agent.setAgentID(generateHashID(agent.toString()));
+    }
+    return agent;
+  }
+
+
+  private void mapMaterialReference(DigitalSpecimen digitalSpecimen,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    if (digitalSpecimen.getOdsHasCitations() != null && !digitalSpecimen.getOdsHasCitations()
+        .isEmpty()) {
+      for (var citation : digitalSpecimen.getOdsHasCitations()) {
+        var reference = new DwcDpReference();
+        reference.setReferenceID(citation.getDctermsIdentifier());
+        reference.setReferenceType(citation.getDctermsType());
+        reference.setBibliographicCitation(citation.getDctermsBibliographicCitation());
+        reference.setIssued(citation.getDctermsDate());
+        reference.setTitle(citation.getDctermsTitle());
+        reference.setPagination(citation.getOdsPageNumber());
+        reference.setIsPeerReviewed(citation.getOdsIsPeerReviewed());
+        reference.setCreator(retrieveCombinedAgentName(citation.getOdsHasAgents(), "creator"));
+        reference.setCreatorID(retrieveCombinedAgentId(citation.getOdsHasAgents(), "creator"));
+        reference.setPublisher(retrieveCombinedAgentName(citation.getOdsHasAgents(), "publisher"));
+        reference.setPublisherID(
+            retrieveCombinedAgentId(citation.getOdsHasAgents(), "publisher"));
+        if (reference.getReferenceID() == null) {
+          reference.setReferenceID(generateHashID(reference.toString()));
+        }
+        results.get(REFERENCE).add(Pair.of(reference.getReferenceID(), reference));
+        mapToMaterialReference(digitalSpecimen.getOdsPhysicalSpecimenID(),
+            reference.getReferenceID(), results);
+      }
+    }
+  }
+
+  private void mapToMaterialReference(String odsPhysicalSpecimenID, String referenceID,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    var materialReference = new DwcDpMaterialReference();
+    materialReference.setMaterialEntityID(odsPhysicalSpecimenID);
+    materialReference.setReferenceID(referenceID);
+    results.get(MATERIAL_REFERENCE)
+        .add(Pair.of(Pair.of(generateHashID(materialReference.toString()), materialReference)));
+  }
+
+  private void mapMaterialAssertion(DigitalSpecimen digitalSpecimen,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    if (digitalSpecimen.getOdsHasAssertions() != null
+        && !digitalSpecimen.getOdsHasAssertions().isEmpty()) {
+      for (var odsHasAssertion : digitalSpecimen.getOdsHasAssertions()) {
+        var assertion = new DwcDpMaterialAssertion();
+        assertion.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
+        assertion.setAssertionID(odsHasAssertion.getId());
+        assertion.setAssertionType(odsHasAssertion.getDwcMeasurementType());
+        assertion.setAssertionTypeIRI(odsHasAssertion.getDwciriMeasurementType());
+        assertion.setAssertionMadeDate(odsHasAssertion.getDwcMeasurementDeterminedDate());
+        assertion.setAssertionValue(odsHasAssertion.getDwcMeasurementValue());
+        assertion.setAssertionValueIRI(odsHasAssertion.getDwciriMeasurementValue());
+        assertion.setAssertionUnit(odsHasAssertion.getDwcMeasurementUnit());
+        assertion.setAssertionUnitIRI(odsHasAssertion.getDwciriMeasurementUnit());
+        assertion.setAssertionBy(
+            retrieveCombinedAgentName(odsHasAssertion.getOdsHasAgents(), null));
+        assertion.setAssertionByID(
+            retrieveCombinedAgentId(odsHasAssertion.getOdsHasAgents(), null));
+        assertion.setAssertionProtocols(odsHasAssertion.getDwcMeasurementMethod());
+        assertion.setAssertionProtocolID(odsHasAssertion.getDwciriMeasurementMethod());
+        assertion.setAssertionReferences(
+            retrieveCombinedCitation(odsHasAssertion.getOdsHasCitations()));
+        assertion.setAssertionRemarks(odsHasAssertion.getDwcMeasurementRemarks());
+        if (assertion.getAssertionID() == null) {
+          assertion.setAssertionID(generateHashID(assertion.toString()));
+        }
+        results.get(MATERIAL_ASSERTION).add(Pair.of(assertion.getAssertionID(), assertion));
+      }
+    }
   }
 
   private void mapMediaToDwcDp(Map<DwcDpClasses, List<Pair<String, Object>>> results,
@@ -350,8 +541,8 @@ public class DwcDpService extends AbstractExportJobService {
           dpMedia.setVariant(media.getAcVariant());
           dpMedia.setVariantLiteral(media.getAcVariantLiteral());
           dpMedia.setVariantDescription(media.getAcVariantDescription());
-          dpMedia.setPixelXDimension(String.valueOf(media.getExifPixelXDimension()));
-          dpMedia.setPixelYDimension(String.valueOf(media.getExifPixelYDimension()));
+          dpMedia.setPixelXDimension(convertValueToString(media.getExifPixelXDimension()));
+          dpMedia.setPixelYDimension(convertValueToString(media.getExifPixelYDimension()));
           results.get(MEDIA).add(Pair.of(dpMedia.getMediaID(), dpMedia));
         });
   }
@@ -406,16 +597,7 @@ public class DwcDpService extends AbstractExportJobService {
   private void mapTaxonAgents(Identification odsHasIdentification, String identificationId,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
     for (var taxonAgent : odsHasIdentification.getOdsHasAgents()) {
-      var agent = new DwcDpAgent();
-      agent.setAgentID(taxonAgent.getId());
-      if (taxonAgent.getType() != null) {
-        agent.setAgentType(taxonAgent.getType().toString());
-      }
-      agent.setAgentTypeVocabulary("https://schema.org/agent");
-      agent.setPreferredAgentName(taxonAgent.getSchemaName());
-      if (agent.getAgentID() == null) {
-        agent.setAgentID(generateHashID(agent.toString()));
-      }
+      var agent = mapAgent(taxonAgent);
       results.get(AGENT).add(Pair.of(agent.getAgentID(), agent));
       mapTaxonAgentRole(taxonAgent, identificationId, agent.getAgentID(), results);
       mapAgentIdentifier(taxonAgent, agent.getAgentID(), results);
@@ -441,7 +623,7 @@ public class DwcDpService extends AbstractExportJobService {
       role.setIdentificationID(identificationId);
       role.setAgentRole(odsHasRole.getSchemaRoleName());
       role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
-      role.setAgentRoleDate(ExportUtils.parseAgentDate(odsHasRole));
+      role.setAgentRoleDate(parseAgentDate(odsHasRole));
       results.get(IDENTIFICATION_AGENT).add(Pair.of(generateHashID(role.toString()), role));
     }
   }
@@ -610,22 +792,93 @@ public class DwcDpService extends AbstractExportJobService {
     }
     results.get(EVENT).add(Pair.of(dwcDpEvent.getEventID(), dwcDpEvent));
     mapEventAgent(event, dwcDpEvent.getEventID(), results);
+    mapEventAssertion(event, dwcDpEvent.getEventID(), results);
+    mapGeologicalContext(event, dwcDpEvent.getEventID(), results);
     return dwcDpEvent.getEventID();
+  }
+
+  private void mapGeologicalContext(Event event, String eventID,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    if (event.getOdsHasLocation() != null
+        && event.getOdsHasLocation().getOdsHasGeologicalContext() != null) {
+      var odsHasGeologicalContext = event.getOdsHasLocation().getOdsHasGeologicalContext();
+      var geologicalContext = new DwcDpGeologicalContext();
+      geologicalContext.setGeologicalContextID(odsHasGeologicalContext.getId());
+      geologicalContext.setEventID(eventID);
+      geologicalContext.setEarliestEonOrLowestEonothem(
+          odsHasGeologicalContext.getDwcEarliestEonOrLowestEonothem());
+      geologicalContext.setLatestEonOrHighestEonothem(
+          odsHasGeologicalContext.getDwcLatestEonOrHighestEonothem());
+      geologicalContext.setEarliestEraOrLowestErathem(
+          odsHasGeologicalContext.getDwcEarliestEraOrLowestErathem());
+      geologicalContext.setLatestEraOrHighestErathem(
+          odsHasGeologicalContext.getDwcLatestEraOrHighestErathem());
+      geologicalContext.setEarliestPeriodOrLowestSystem(
+          odsHasGeologicalContext.getDwcEarliestPeriodOrLowestSystem());
+      geologicalContext.setLatestPeriodOrHighestSystem(
+          odsHasGeologicalContext.getDwcLatestPeriodOrHighestSystem());
+      geologicalContext.setEarliestEpochOrLowestSeries(
+          odsHasGeologicalContext.getDwcEarliestEpochOrLowestSeries());
+      geologicalContext.setLatestEpochOrHighestSeries(
+          odsHasGeologicalContext.getDwcLatestEpochOrHighestSeries());
+      geologicalContext.setEarliestAgeOrLowestStage(
+          odsHasGeologicalContext.getDwcEarliestAgeOrLowestStage());
+      geologicalContext.setLatestAgeOrHighestStage(
+          odsHasGeologicalContext.getDwcLatestAgeOrHighestStage());
+      geologicalContext.setLowestBiostratigraphicZone(
+          odsHasGeologicalContext.getDwcLowestBiostratigraphicZone());
+      geologicalContext.setHighestBiostratigraphicZone(
+          odsHasGeologicalContext.getDwcHighestBiostratigraphicZone());
+      geologicalContext.setLithostratigraphicTerms(
+          odsHasGeologicalContext.getDwcLithostratigraphicTerms());
+      geologicalContext.setGroup(odsHasGeologicalContext.getDwcGroup());
+      geologicalContext.setFormation(odsHasGeologicalContext.getDwcFormation());
+      geologicalContext.setMember(odsHasGeologicalContext.getDwcMember());
+      geologicalContext.setBed(odsHasGeologicalContext.getDwcBed());
+      if (geologicalContext.getGeologicalContextID() == null) {
+        geologicalContext.setGeologicalContextID(generateHashID(geologicalContext.toString()));
+      }
+      results.get(GEOLOGICAL_CONTEXT)
+          .add(Pair.of(geologicalContext.getGeologicalContextID(), geologicalContext));
+    }
+  }
+
+
+  private void mapEventAssertion(
+      Event event, String eventId, Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    if (event.getOdsHasAssertions() != null && !event.getOdsHasAssertions().isEmpty()) {
+      for (var odsHasAssertion : event.getOdsHasAssertions()) {
+        var assertion = new DwcDpEventAssertion();
+        assertion.setEventID(eventId);
+        assertion.setAssertionID(odsHasAssertion.getId());
+        assertion.setAssertionType(odsHasAssertion.getDwcMeasurementType());
+        assertion.setAssertionTypeIRI(odsHasAssertion.getDwciriMeasurementType());
+        assertion.setAssertionMadeDate(odsHasAssertion.getDwcMeasurementDeterminedDate());
+        assertion.setAssertionValue(odsHasAssertion.getDwcMeasurementValue());
+        assertion.setAssertionValueIRI(odsHasAssertion.getDwciriMeasurementValue());
+        assertion.setAssertionUnit(odsHasAssertion.getDwcMeasurementUnit());
+        assertion.setAssertionUnitIRI(odsHasAssertion.getDwciriMeasurementUnit());
+        assertion.setAssertionBy(
+            retrieveCombinedAgentName(odsHasAssertion.getOdsHasAgents(), null));
+        assertion.setAssertionByID(
+            retrieveCombinedAgentId(odsHasAssertion.getOdsHasAgents(), null));
+        assertion.setAssertionProtocols(odsHasAssertion.getDwcMeasurementMethod());
+        assertion.setAssertionProtocolID(odsHasAssertion.getDwciriMeasurementMethod());
+        assertion.setAssertionReferences(
+            retrieveCombinedCitation(odsHasAssertion.getOdsHasCitations()));
+        assertion.setAssertionRemarks(odsHasAssertion.getDwcMeasurementRemarks());
+        if (assertion.getAssertionID() == null) {
+          assertion.setAssertionID(generateHashID(assertion.toString()));
+        }
+        results.get(EVENT_ASSERTION).add(Pair.of(assertion.getAssertionID(), assertion));
+      }
+    }
   }
 
   private void mapEventAgent(Event event, String eventId,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
     for (var agent : event.getOdsHasAgents()) {
-      var eventAgent = new DwcDpAgent();
-      eventAgent.setAgentID(agent.getId());
-      if (agent.getType() != null) {
-        eventAgent.setAgentType(agent.getType().toString());
-      }
-      eventAgent.setAgentTypeVocabulary("https://schema.org/agent");
-      eventAgent.setPreferredAgentName(agent.getSchemaName());
-      if (eventAgent.getAgentID() == null) {
-        eventAgent.setAgentID(generateHashID(eventAgent.toString()));
-      }
+      var eventAgent = mapAgent(agent);
       results.get(AGENT).add(Pair.of(eventAgent.getAgentID(), eventAgent));
       mapEventAgentRole(agent, eventId, eventAgent.getAgentID(), results);
       mapAgentIdentifier(agent, eventAgent.getAgentID(), results);
@@ -640,7 +893,7 @@ public class DwcDpService extends AbstractExportJobService {
       role.setEventID(eventId);
       role.setAgentRole(odsHasRole.getSchemaRoleName());
       role.setAgentRoleOrder(odsHasRole.getSchemaPosition());
-      role.setAgentRoleDate(ExportUtils.parseAgentDate(odsHasRole));
+      role.setAgentRoleDate(parseAgentDate(odsHasRole));
       results.get(EVENT_AGENT).add(Pair.of(generateHashID(role.toString()), role));
     }
   }

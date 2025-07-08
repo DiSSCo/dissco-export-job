@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.schema.Agent;
+import eu.dissco.exportjob.schema.Citation;
 import eu.dissco.exportjob.schema.DigitalSpecimen;
 import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identifier;
@@ -17,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ExportUtilsTest {
 
@@ -63,6 +66,20 @@ class ExportUtilsTest {
             "getDwcYear",
             "1990")
     );
+  }
+
+  private static Stream<Arguments> sourceRetrieveCombinedCitation() {
+    return Stream.of(
+        Arguments.of(null, null),
+        Arguments.of(List.of(), null),
+        Arguments.of(
+            List.of(new Citation().withDctermsBibliographicCitation("bilbiographicReference1"),
+                new Citation()), "bilbiographicReference1"),
+        Arguments.of(
+            List.of(new Citation().withDctermsBibliographicCitation("bilbiographicReference1"),
+                new Citation().withDctermsBibliographicCitation("bilbiographicReference2")),
+            "bilbiographicReference1 | bilbiographicReference2")
+        );
   }
 
   @Test
@@ -180,7 +197,33 @@ class ExportUtilsTest {
         () -> ExportUtils.retrieveTerm(new DigitalSpecimen().withOdsHasEvents(List.of(new Event())),
             DwcaService.EVENT_CHECK,
             DwcaService.EVENT_GET, "unknownMethod"));
+  }
 
+  @ParameterizedTest
+  @MethodSource("sourceRetrieveCombinedCitation")
+  void testRetrieveCombinedCitation(List<Citation> citations, String expected) {
+    // Given
+
+    // When
+    var result = ExportUtils.retrieveCombinedCitation(citations);
+
+    // Then
+    assertThat(result).isEqualTo(expected);
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = {100, -23})
+  @NullSource
+  void testConvertValueToString(Integer value) {
+    // When
+    String result = ExportUtils.convertValueToString(value);
+
+    // Then
+    if (value == null) {
+      assertThat(result).isNull();
+    } else {
+      assertThat(result).isEqualTo(String.valueOf(value));
+    }
   }
 
 }
