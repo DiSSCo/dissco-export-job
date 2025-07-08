@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class ExportUtils {
 
@@ -84,14 +85,15 @@ public class ExportUtils {
     return String.join(" | ", agentNames);
   }
 
-  public static String retrieveTerm(DigitalSpecimen digitalSpecimen, Predicate<DigitalSpecimen> condition,
-      Function<DigitalSpecimen, Object> extractor, String methodName)
+  public static String retrieveTerm(DigitalSpecimen digitalSpecimen,
+      Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> functions,
+      String methodName)
       throws FailedProcessingException {
-    if (condition.test(digitalSpecimen)) {
+    if (functions.getLeft().test(digitalSpecimen)) {
       return null;
     }
-    var event = extractor.apply(digitalSpecimen);
-    return retrieveValueFromClass(event, methodName);
+    var classInstance = functions.getRight().apply(digitalSpecimen);
+    return retrieveValueFromClass(classInstance, methodName);
   }
 
   private static String retrieveValueFromClass(Object classInstance, String methodName)

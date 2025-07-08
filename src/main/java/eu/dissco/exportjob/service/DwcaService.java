@@ -55,23 +55,22 @@ import org.springframework.stereotype.Service;
 @Profile(Profiles.DWCA)
 public class DwcaService extends AbstractExportJobService {
 
-  public static final Predicate<DigitalSpecimen> EVENT_CHECK = ds -> ds.getOdsHasEvents() == null
-      || ds.getOdsHasEvents().isEmpty();
-  public static final Predicate<DigitalSpecimen> LOCATION_CHECK = EVENT_CHECK.or(
-      ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation() == null);
-  public static final Predicate<DigitalSpecimen> GEOLOGICAL_CONTEXT_CHECK = LOCATION_CHECK.or(
-      ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeologicalContext()
-          == null);
-  public static final Predicate<DigitalSpecimen> GEOREFERENCE_CHECK = LOCATION_CHECK.or(ds ->
-      ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference() == null);
-  public static final Function<DigitalSpecimen, Object> EVENT_GET = ds -> ds.getOdsHasEvents()
-      .getFirst();
-  public static final Function<DigitalSpecimen, Object> LOCATION_GET = ds -> ds.getOdsHasEvents()
-      .getFirst().getOdsHasLocation();
-  public static final Function<DigitalSpecimen, Object> GEOLOGICAL_CONTEXT_GET = ds -> ds.getOdsHasEvents()
-      .getFirst().getOdsHasLocation().getOdsHasGeologicalContext();
-  public static final Function<DigitalSpecimen, Object> GEOREFERENCE_GET = ds -> ds.getOdsHasEvents()
-      .getFirst().getOdsHasLocation().getOdsHasGeoreference();
+  public static final Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> EVENT_FUNCTIONS =
+      Pair.of(ds -> ds.getOdsHasEvents() == null || ds.getOdsHasEvents().isEmpty(),
+          ds -> ds.getOdsHasEvents().getFirst());
+  public static final Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> LOCATION_FUNCTIONS =
+      Pair.of(EVENT_FUNCTIONS.getLeft().or(
+              ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation() == null),
+          ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation());
+  public static final Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> GEOLOGICAL_CONTEXT_FUNCTIONS =
+      Pair.of(LOCATION_FUNCTIONS.getLeft()
+              .or(ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeologicalContext()
+                  == null),
+          ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeologicalContext());
+  public static final Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> GEOREFERENCE_FUNCTIONS =
+      Pair.of(LOCATION_FUNCTIONS.getLeft().or(ds ->
+              ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference() == null),
+          ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference());
 
 
   private final ObjectMapper objectMapper;
@@ -163,203 +162,203 @@ public class DwcaService extends AbstractExportJobService {
       ArrayList<Pair<Term, String>> occurrenceRecord)
       throws FailedProcessingException {
     occurrenceRecord.add(Pair.of(DwcTerm.sex,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcSex")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcSex")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.lifeStage,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcLifeStage")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcLifeStage")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.reproductiveCondition,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET,
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS,
                 "getDwcReproductiveCondition")));
     occurrenceRecord.add(Pair.of(DwcTerm.caste,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcCaste")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcCaste")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.behavior,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcBehavior")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcBehavior")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.vitality,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcVitality")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcVitality")));
     occurrenceRecord.add(Pair.of(DwcTerm.establishmentMeans,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcEstablishmentMeans")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcEstablishmentMeans")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.degreeOfEstablishment,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET,
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS,
                 "getDwcDegreeOfEstablishment")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.pathway,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcPathway")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcPathway")));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferenceVerificationStatus,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET,
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS,
             "getDwcGeoreferenceVerificationStatus")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.eventType,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcEventType")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcEventType")));
     occurrenceRecord.add(
-        Pair.of(DwcTerm.fieldNotes,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcFieldNumber")));
+        Pair.of(DwcTerm.fieldNumber,
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcFieldNumber")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.eventDate,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcEventDate")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcEventDate")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.eventTime,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcEventTime")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcEventTime")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.startDayOfYear,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcStartDayOfYear")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcStartDayOfYear")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.endDayOfYear,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcEndDayOfYear")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcEndDayOfYear")));
     occurrenceRecord.add(Pair.of(DwcTerm.year,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcYear")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcYear")));
     occurrenceRecord.add(Pair.of(DwcTerm.month,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcMonth")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcMonth")));
     occurrenceRecord.add(Pair.of(DwcTerm.day,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcDay")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcDay")));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimEventDate,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcVerbatimEventDate")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcVerbatimEventDate")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.habitat,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcHabitat")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcHabitat")));
     occurrenceRecord.add(Pair.of(DwcTerm.samplingProtocol,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcSamplingProtocol")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcSamplingProtocol")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.sampleSizeValue,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcSampleSizeValue")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcSampleSizeValue")));
     occurrenceRecord.add(Pair.of(DwcTerm.sampleSizeUnit,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcSampleSizeUnit")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcSampleSizeUnit")));
     occurrenceRecord.add(Pair.of(DwcTerm.samplingEffort,
-        retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcSamplingEffort")));
+        retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcSamplingEffort")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.fieldNotes,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcFieldNotes")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcFieldNotes")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.eventRemarks,
-            retrieveTerm(digitalSpecimen, EVENT_CHECK, EVENT_GET, "getDwcEventRemarks")));
+            retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, "getDwcEventRemarks")));
     occurrenceRecord.add(Pair.of(DwcTerm.eventID, digitalSpecimen.getId()));
   }
 
   private void mapLocation(DigitalSpecimen digitalSpecimen,
       ArrayList<Pair<Term, String>> occurrenceRecord) throws FailedProcessingException {
     occurrenceRecord.add(Pair.of(DwcTerm.locationID,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getId")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getId")));
     occurrenceRecord.add(Pair.of(DwcTerm.higherGeography,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcHigherGeography")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcHigherGeography")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.higherGeographyID,
-            retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+            retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
                 "getDwcHigherGeographyID")));
     occurrenceRecord.add(Pair.of(DwcTerm.continent,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcContinent")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcContinent")));
     occurrenceRecord.add(Pair.of(DwcTerm.waterBody,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcWaterBody")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcWaterBody")));
     occurrenceRecord.add(Pair.of(DwcTerm.island,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcIsland")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcIsland")));
     occurrenceRecord.add(Pair.of(DwcTerm.islandGroup,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcIslandGroup")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcIslandGroup")));
     occurrenceRecord.add(Pair.of(DwcTerm.country,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcCountry")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcCountry")));
     occurrenceRecord.add(Pair.of(DwcTerm.countryCode,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcCountryCode")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcCountryCode")));
     occurrenceRecord.add(Pair.of(DwcTerm.stateProvince,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcStateProvince")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcStateProvince")));
     occurrenceRecord.add(Pair.of(DwcTerm.county,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcCounty")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcCounty")));
     occurrenceRecord.add(Pair.of(DwcTerm.municipality,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcMunicipality")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcMunicipality")));
     occurrenceRecord.add(Pair.of(DwcTerm.locality,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcLocality")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcLocality")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.verbatimLocality,
-            retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+            retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
                 "getDwcVerbatimLocality")));
     occurrenceRecord.add(Pair.of(DwcTerm.minimumElevationInMeters,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
             "getDwcMinimumElevationInMeters")));
     occurrenceRecord.add(Pair.of(DwcTerm.maximumElevationInMeters,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
             "getDwcMaximumElevationInMeters")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.verbatimElevation,
-            retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+            retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
                 "getDwcVerbatimElevation")));
     occurrenceRecord.add(Pair.of(DwcTerm.minimumDepthInMeters,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
             "getDwcMinimumDepthInMeters")));
     occurrenceRecord.add(Pair.of(DwcTerm.maximumDepthInMeters,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
             "getDwcMaximumDepthInMeters")));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimDepth,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcVerbatimDepth")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcVerbatimDepth")));
     occurrenceRecord.add(Pair.of(DwcTerm.maximumDistanceAboveSurfaceInMeters,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
             "getDwcMaximumDistanceAboveSurfaceInMeters")));
     occurrenceRecord.add(Pair.of(DwcTerm.minimumDistanceAboveSurfaceInMeters,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
             "getDwcMinimumDistanceAboveSurfaceInMeters")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.locationAccordingTo,
-            retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET,
+            retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS,
                 "getDwcLocationAccordingTo")));
     occurrenceRecord.add(Pair.of(DwcTerm.locationRemarks,
-        retrieveTerm(digitalSpecimen, LOCATION_CHECK, LOCATION_GET, "getDwcLocationRemarks")));
+        retrieveTerm(digitalSpecimen, LOCATION_FUNCTIONS, "getDwcLocationRemarks")));
   }
 
   private void mapGeologicalContext(
       DigitalSpecimen digitalSpecimen, ArrayList<Pair<Term, String>> occurrenceRecord)
       throws FailedProcessingException {
     occurrenceRecord.add(Pair.of(DwcTerm.geologicalContextID,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getId")));
     occurrenceRecord.add(Pair.of(DwcTerm.earliestEonOrLowestEonothem,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcEarliestEonOrLowestEonothem")));
     occurrenceRecord.add(Pair.of(DwcTerm.latestEonOrHighestEonothem,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLatestEonOrHighestEonothem")));
     occurrenceRecord.add(Pair.of(DwcTerm.earliestEraOrLowestErathem,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcEarliestEraOrLowestErathem")));
     occurrenceRecord.add(Pair.of(DwcTerm.latestEraOrHighestErathem,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLatestEraOrHighestErathem")));
     occurrenceRecord.add(Pair.of(DwcTerm.earliestPeriodOrLowestSystem,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcEarliestPeriodOrLowestSystem")));
     occurrenceRecord.add(Pair.of(DwcTerm.latestPeriodOrHighestSystem,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLatestPeriodOrHighestSystem")));
     occurrenceRecord.add(Pair.of(DwcTerm.earliestEpochOrLowestSeries,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcEarliestEpochOrLowestSeries")));
     occurrenceRecord.add(Pair.of(DwcTerm.latestEpochOrHighestSeries,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLatestEpochOrHighestSeries")));
     occurrenceRecord.add(Pair.of(DwcTerm.earliestAgeOrLowestStage,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcEarliestAgeOrLowestStage")));
     occurrenceRecord.add(Pair.of(DwcTerm.latestAgeOrHighestStage,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLatestAgeOrHighestStage")));
     occurrenceRecord.add(Pair.of(DwcTerm.lowestBiostratigraphicZone,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLowestBiostratigraphicZone")));
     occurrenceRecord.add(Pair.of(DwcTerm.highestBiostratigraphicZone,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcHighestBiostratigraphicZone")));
     occurrenceRecord.add(Pair.of(DwcTerm.lithostratigraphicTerms,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcLithostratigraphicTerms")));
     occurrenceRecord.add(Pair.of(DwcTerm.group,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcGroup")));
     occurrenceRecord.add(Pair.of(DwcTerm.formation,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcFormation")));
     occurrenceRecord.add(Pair.of(DwcTerm.member,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcMember")));
     occurrenceRecord.add(Pair.of(DwcTerm.bed,
-        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_CHECK, GEOLOGICAL_CONTEXT_GET,
+        retrieveTerm(digitalSpecimen, GEOLOGICAL_CONTEXT_FUNCTIONS,
             "getDwcBed")));
   }
 
@@ -512,64 +511,64 @@ public class DwcaService extends AbstractExportJobService {
       ArrayList<Pair<Term, String>> occurrenceRecord) throws FailedProcessingException {
     occurrenceRecord.add(
         Pair.of(DwcTerm.decimalLatitude,
-            retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+            retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
                 "getDwcDecimalLatitude")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.decimalLongitude,
-            retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+            retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
                 "getDwcDecimalLongitude")));
     occurrenceRecord.add(Pair.of(DwcTerm.geodeticDatum,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcGeodeticDatum")));
     occurrenceRecord.add(Pair.of(DwcTerm.coordinateUncertaintyInMeters,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcCoordinateUncertaintyInMeters")));
     occurrenceRecord.add(Pair.of(DwcTerm.coordinatePrecision,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcCoordinatePrecision")));
     occurrenceRecord.add(Pair.of(DwcTerm.pointRadiusSpatialFit,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcPointRadiusSpatialFit")));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimCoordinates,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcVerbatimCoordinates")));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimLatitude,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcVerbatimLatitude")));
     occurrenceRecord.add(
         Pair.of(DwcTerm.verbatimLongitude,
-            retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+            retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
                 "getDwcVerbatimLongitude")));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimCoordinateSystem,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcVerbatimCoordinateSystem")));
     occurrenceRecord.add(Pair.of(DwcTerm.verbatimSRS,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET, "getDwcVerbatimSRS")));
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS, "getDwcVerbatimSRS")));
     occurrenceRecord.add(Pair.of(DwcTerm.footprintWKT,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET, "getDwcFootprintWKT")));
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS, "getDwcFootprintWKT")));
     occurrenceRecord.add(Pair.of(DwcTerm.footprintSRS,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET, "getDwcFootprintSRS")));
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS, "getDwcFootprintSRS")));
     occurrenceRecord.add(Pair.of(DwcTerm.footprintSpatialFit,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcFootprintSpatialFit")));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferencedBy,
         retrieveCombinedAgentName(retrieveGeoreferenceAgent(digitalSpecimen), null)));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferencedDate,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcGeoreferencedDate")));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferenceProtocol,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcGeoreferenceProtocol")));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferenceSources,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcGeoreferenceSources")));
     occurrenceRecord.add(Pair.of(DwcTerm.georeferenceRemarks,
-        retrieveTerm(digitalSpecimen, GEOREFERENCE_CHECK, GEOREFERENCE_GET,
+        retrieveTerm(digitalSpecimen, GEOREFERENCE_FUNCTIONS,
             "getDwcGeoreferenceRemarks")));
   }
 
   private List<Agent> retrieveGeoreferenceAgent(DigitalSpecimen digitalSpecimen) {
-    if (GEOREFERENCE_CHECK.test(digitalSpecimen)) {
+    if (GEOREFERENCE_FUNCTIONS.getLeft().test(digitalSpecimen)) {
       return null;
     }
     return digitalSpecimen.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference()
