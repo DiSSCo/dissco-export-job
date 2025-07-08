@@ -11,7 +11,6 @@ import eu.dissco.exportjob.schema.DigitalSpecimen;
 import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
-import eu.dissco.exportjob.service.DwcaService;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
