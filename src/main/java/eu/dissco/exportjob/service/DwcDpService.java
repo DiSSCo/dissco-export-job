@@ -475,7 +475,7 @@ public class DwcDpService extends AbstractExportJobService {
     materialReference.setMaterialEntityID(odsPhysicalSpecimenID);
     materialReference.setReferenceID(referenceID);
     results.get(MATERIAL_REFERENCE)
-        .add(Pair.of(Pair.of(generateHashID(materialReference.toString()), materialReference)));
+        .add(Pair.of(generateHashID(materialReference.toString()), materialReference));
   }
 
   private void mapMaterialAssertion(DigitalSpecimen digitalSpecimen,

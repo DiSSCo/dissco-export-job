@@ -73,12 +73,12 @@ class ExportUtilsTest {
         Arguments.of(null, null),
         Arguments.of(List.of(), null),
         Arguments.of(
-            List.of(new Citation().withDctermsBibliographicCitation("bilbiographicReference1"),
-                new Citation()), "bilbiographicReference1"),
+            List.of(new Citation().withDctermsBibliographicCitation("bibliographicReference1"),
+                new Citation()), "bibliographicReference1"),
         Arguments.of(
-            List.of(new Citation().withDctermsBibliographicCitation("bilbiographicReference1"),
-                new Citation().withDctermsBibliographicCitation("bilbiographicReference2")),
-            "bilbiographicReference1 | bilbiographicReference2")
+            List.of(new Citation().withDctermsBibliographicCitation("bibliographicReference1"),
+                new Citation().withDctermsBibliographicCitation("bibliographicReference2")),
+            "bibliographicReference1 | bibliographicReference2")
         );
   }
 
@@ -195,6 +195,7 @@ class ExportUtilsTest {
     assertThrows(FailedProcessingException.class,
         () -> ExportUtils.retrieveTerm(new DigitalSpecimen().withOdsHasEvents(List.of(new Event())),
             EVENT_FUNCTIONS, "unknownMethod"));
+  }
 
   @ParameterizedTest
   @MethodSource("sourceRetrieveCombinedCitation")

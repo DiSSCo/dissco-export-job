@@ -785,8 +785,7 @@ public class DwcaService extends AbstractExportJobService {
     assertionRecord.add(
         Pair.of(DwcTerm.measurementAccuracy, assertion.getDwcMeasurementAccuracy()));
     assertionRecord.add(Pair.of(DwcTerm.measurementUnit, assertion.getDwcMeasurementUnit()));
-    assertionRecord.add(
-        Pair.of(ObisTerm.measurementValueID, assertion.getDwciriMeasurementValue()));
+    assertionRecord.add(Pair.of(ObisTerm.measurementUnitID, assertion.getDwciriMeasurementUnit()));
     assertionRecord.add(
         Pair.of(DwcTerm.measurementDeterminedDate, assertion.getDwcMeasurementDeterminedDate()));
     assertionRecord.add(Pair.of(DwcTerm.measurementDeterminedBy,
