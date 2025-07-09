@@ -1,6 +1,7 @@
 package eu.dissco.exportjob.utils;
 
 
+import static eu.dissco.exportjob.service.DwcaService.EVENT_FUNCTIONS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -11,7 +12,6 @@ import eu.dissco.exportjob.schema.DigitalSpecimen;
 import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
-import eu.dissco.exportjob.service.DwcaService;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -181,8 +181,7 @@ class ExportUtilsTest {
     // Given
 
     // When
-    var result = ExportUtils.retrieveTerm(digitalSpecimen, DwcaService.EVENT_CHECK,
-        DwcaService.EVENT_GET, methodName);
+    var result = ExportUtils.retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, methodName);
 
     // Then
     assertThat(result).isEqualTo(expected);
@@ -195,9 +194,7 @@ class ExportUtilsTest {
     // When / Then
     assertThrows(FailedProcessingException.class,
         () -> ExportUtils.retrieveTerm(new DigitalSpecimen().withOdsHasEvents(List.of(new Event())),
-            DwcaService.EVENT_CHECK,
-            DwcaService.EVENT_GET, "unknownMethod"));
-  }
+            EVENT_FUNCTIONS, "unknownMethod"));
 
   @ParameterizedTest
   @MethodSource("sourceRetrieveCombinedCitation")

@@ -13,7 +13,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class ExportUtils {
 
@@ -98,14 +97,14 @@ public class ExportUtils {
   }
 
   public static String retrieveTerm(DigitalSpecimen digitalSpecimen,
-      Predicate<DigitalSpecimen> condition,
-      Function<DigitalSpecimen, Object> extractor, String methodName)
+      Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> functions,
+      String methodName)
       throws FailedProcessingException {
-    if (condition.test(digitalSpecimen)) {
+    if (functions.getLeft().test(digitalSpecimen)) {
       return null;
     }
-    var event = extractor.apply(digitalSpecimen);
-    return retrieveValueFromClass(event, methodName);
+    var classInstance = functions.getRight().apply(digitalSpecimen);
+    return retrieveValueFromClass(classInstance, methodName);
   }
 
   private static String retrieveValueFromClass(Object classInstance, String methodName)
