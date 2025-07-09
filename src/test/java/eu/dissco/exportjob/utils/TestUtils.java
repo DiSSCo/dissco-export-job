@@ -521,6 +521,14 @@ public class TestUtils {
                   ]
                 }
               ],
+              "ods:hasAssertions": [
+                {
+                  "dwc:measurementType": "lifestage",
+                  "dwciri:measurementType": "vocab.nerc.ac.uk/collection/P01/current/LSTAGE01",
+                  "dwc:measurementValue": "juvenile",
+                  "dwciri:measurementValue": "http://vocab.nerc.ac.uk/collection/S11/current/S1127"
+                }
+              ],
               "ods:hasIdentifiers": [
                 {
                   "@id": "79569268-d66d-4899-b3f7-aafeb13069d0",
@@ -562,6 +570,35 @@ public class TestUtils {
                   "dcterms:bibliographicCitation": "Seregin A. P. (Ed.). 2025. Specimen MW0589635 from the collection Moscow University Herbarium // Depository of Live Systems (branch Plants): Electronic resource. – Moscow State University, Moscow. – Available at: https://plant.depo.mitotech.ru/open/public/item/MW0589635 (indicate access date)."
                 }
               ],
+              "ods:hasChronometricAges": [
+                  {
+                    "chrono:verbatimChronometricAge": "27 BC to 14 AD",
+                    "chrono:chronometricAgeConversionProtocol": "INTCAL13",
+                    "ods:hasAgents": [
+                      {
+                        "@type": "schema:Person",
+                        "@id": "https://orcid.org/0000-0002-5669-2769",
+                        "schema:identifier": "https://orcid.org/0000-0002-5669-2769",
+                        "schema:name": "Sam Leeflang",
+                        "ods:hasRoles": [
+                          {
+                            "@type": "schema:Role",
+                            "schema:roleName": "determiner"
+                          }
+                        ],
+                        "ods:hasIdentifiers": [
+                          {
+                            "@id": "https://orcid.org/0000-0002-5669-2769",
+                            "@type": "ods:Identifier",
+                            "dcterms:title": "orcid",
+                            "dcterms:identifier": "https://orcid.org/0000-0002-5669-2769",
+                            "ods:gupriLevel": "GloballyUniqueStable"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
               "ods:hasEvents": [
                 {
                   "@type": "ods:Event",
@@ -607,6 +644,14 @@ public class TestUtils {
                           "schema:roleName": "collector"
                         }
                       ]
+                    }
+                  ],
+                  "ods:hasAssertions": [
+                    {
+                      "dwc:measurementType": "lifestage",
+                      "dwciri:measurementType": "vocab.nerc.ac.uk/collection/P01/current/LSTAGE01",
+                      "dwc:measurementValue": "juvenile",
+                      "dwciri:measurementValue": "http://vocab.nerc.ac.uk/collection/S11/current/S1127"
                     }
                   ],
                   "ods:hasLocation": {

@@ -606,7 +606,7 @@ class DwcDpServiceTest {
     service.setup();
 
     // Then
-    then(databaseRepository).should(times(13)).createTable(anyString());
+    then(databaseRepository).should(times(20)).createTable(anyString());
   }
 
   @Test
@@ -618,6 +618,6 @@ class DwcDpServiceTest {
     service.cleanup();
 
     // Then
-    then(databaseRepository).should(times(13)).dropTable(anyString());
+    then(databaseRepository).should(times(20)).dropTable(anyString());
   }
 }

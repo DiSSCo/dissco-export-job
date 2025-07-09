@@ -16,7 +16,14 @@ public enum DwcDpClasses {
   MEDIA("media.csv", "media", DwcDpMedia.class),
   OCCURRENCE("occurrence.csv", "occurrence", DwcDpOccurrence.class),
   RELATIONSHIP("relationship.csv", "relationship", DwcDpRelationship.class),
-  IDENTIFICATION_TAXON("identification-taxon.csv", "identification-taxon", DwcDpTaxonIdentification.class);
+  IDENTIFICATION_TAXON("identification-taxon.csv", "identification-taxon", DwcDpTaxonIdentification.class),
+  MATERIAL_ASSERTION("material-assertion.csv", "material-assertion", DwcDpMaterialAssertion.class),
+  EVENT_ASSERTION("event-assertion.csv", "event-assertion", DwcDpEventAssertion.class),
+  MATERIAL_REFERENCE("material-reference.csv", "material-reference", DwcDpMaterialReference.class),
+  REFERENCE("reference.csv", "reference", DwcDpReference.class),
+  GEOLOGICAL_CONTEXT("geological-context.csv", "geological-context", DwcDpGeologicalContext.class),
+  CHRONOMETRIC_AGE("chronometric-age.csv", "chronometric-age", DwcDpChronometricAge.class),
+  CHRONOMETRIC_AGE_AGENT("chronometric-age-agent-role.csv", "chronometric-age-agent-role", DwcDpChronometricAgeAgent.class);
   
   
   private final String fileName;
