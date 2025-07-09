@@ -93,11 +93,11 @@ public class DwcaZipWriter {
 
   private void writeRow(Term rowType, String[] row) throws IOException {
     var writerInfo = writers.get(rowType);
-    var maxMappingColumn = writerInfo.getRight();
+    var expectedRowLength = writerInfo.getRight();
     var writer = writerInfo.getLeft();
-    if (row.length > maxMappingColumn) {
+    if (row.length != expectedRowLength) {
       throw new IllegalArgumentException(
-          "Input rows are not equal to the defined mapping of " + maxMappingColumn + " columns.");
+          "Input rows are not equal to the defined mapping of " + expectedRowLength + " columns.");
     }
     writer.write(row);
   }
@@ -108,12 +108,12 @@ public class DwcaZipWriter {
       throw new IllegalArgumentException(
           "The writer mapping for term: " + CORE_ID_TERM.simpleName() + " must not be empty.");
     }
-    final int maxMapping = maxMappingColumn(mapping);
+    final int maxMapping = expectedRowLength(mapping);
     TabWriter writer = addArchiveFile(rowType, mapping);
     writers.put(rowType, Pair.of(writer, maxMapping));
   }
 
-  private int maxMappingColumn(Map<Term, Integer> mapping) {
+  private int expectedRowLength(Map<Term, Integer> mapping) {
     var addOneForLengthChecking = 1;
     return mapping.values().stream().max(Integer::compareTo).orElseThrow()
         + addOneForLengthChecking;

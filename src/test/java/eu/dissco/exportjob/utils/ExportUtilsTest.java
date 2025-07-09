@@ -1,10 +1,14 @@
 package eu.dissco.exportjob.utils;
 
 
+import static eu.dissco.exportjob.service.DwcaService.EVENT_FUNCTIONS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.schema.Agent;
 import eu.dissco.exportjob.schema.DigitalSpecimen;
+import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
 import java.util.List;
@@ -44,6 +48,21 @@ class ExportUtilsTest {
         .withOdsHasRoles(List.of(new OdsHasRole().withSchemaRoleName("collector")));
     var agent2 = new Agent().withSchemaIdentifier("agent2").withSchemaName("agent2");
     return List.of(agent1, agent2);
+  }
+
+  private static Stream<Arguments> sourceRetrieveTerm() {
+    return Stream.of(
+        Arguments.of(
+            new DigitalSpecimen().withOdsHasEvents(List.of(new Event().withDwcSex("female"))),
+            "getDwcSex", "female"),
+        Arguments.of(new DigitalSpecimen(), "getDwcSex", null),
+        Arguments.of(
+            new DigitalSpecimen().withOdsHasEvents(List.of(new Event())), "getDwcSex", null),
+        Arguments.of(
+            new DigitalSpecimen().withOdsHasEvents(List.of(new Event().withDwcYear(1990))),
+            "getDwcYear",
+            "1990")
+    );
   }
 
   @Test
@@ -136,6 +155,30 @@ class ExportUtilsTest {
 
     // Then
     assertThat(result).isEqualTo(expected);
+  }
+
+  @ParameterizedTest
+  @MethodSource("sourceRetrieveTerm")
+  void testRetrieveTerm(DigitalSpecimen digitalSpecimen, String methodName, String expected)
+      throws FailedProcessingException {
+    // Given
+
+    // When
+    var result = ExportUtils.retrieveTerm(digitalSpecimen, EVENT_FUNCTIONS, methodName);
+
+    // Then
+    assertThat(result).isEqualTo(expected);
+  }
+
+  @Test
+  void testRetrieveTermException() {
+    // Given
+
+    // When / Then
+    assertThrows(FailedProcessingException.class,
+        () -> ExportUtils.retrieveTerm(new DigitalSpecimen().withOdsHasEvents(List.of(new Event())),
+            EVENT_FUNCTIONS, "unknownMethod"));
+
   }
 
 }
