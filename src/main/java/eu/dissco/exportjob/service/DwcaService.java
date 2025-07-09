@@ -2,6 +2,7 @@ package eu.dissco.exportjob.service;
 
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_IDENTIFIERS;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_RELATIONSHIPS;
+import static eu.dissco.exportjob.utils.ExportUtils.convertValueToString;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentId;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentName;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
@@ -18,6 +19,7 @@ import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
 import eu.dissco.exportjob.schema.Agent;
+import eu.dissco.exportjob.schema.Assertion;
 import eu.dissco.exportjob.schema.Citation;
 import eu.dissco.exportjob.schema.DigitalMedia;
 import eu.dissco.exportjob.schema.DigitalSpecimen;
@@ -38,11 +40,13 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.gbif.dwc.terms.AcTerm;
+import org.gbif.dwc.terms.ChronoTerm;
 import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.DwcaTerm;
 import org.gbif.dwc.terms.ExifTerm;
 import org.gbif.dwc.terms.GbifTerm;
+import org.gbif.dwc.terms.ObisTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.XmpRightsTerm;
 import org.gbif.dwc.terms.XmpTerm;
@@ -71,6 +75,10 @@ public class DwcaService extends AbstractExportJobService {
       Pair.of(LOCATION_FUNCTIONS.getLeft().or(ds ->
               ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference() == null),
           ds -> ds.getOdsHasEvents().getFirst().getOdsHasLocation().getOdsHasGeoreference());
+
+  private static final String OCCURRENCE_ID = "dwc:occurrenceID";
+  private static final String UNIT_GUID = "abcd:unitGUID";
+  private static final String UNIT_ID = "abcd:unitID";
 
 
   private final ObjectMapper objectMapper;
@@ -137,12 +145,16 @@ public class DwcaService extends AbstractExportJobService {
     var identifierList = new ArrayList<List<Pair<Term, String>>>();
     var relationshipList = new ArrayList<List<Pair<Term, String>>>();
     var digitalMediaList = new ArrayList<List<Pair<Term, String>>>();
+    var assertionList = new ArrayList<List<Pair<Term, String>>>();
+    var chronometricAgeList = new ArrayList<List<Pair<Term, String>>>();
     for (var digitalSpecimen : digitalSpecimenList) {
       addOccurrence(digitalSpecimen, occurrenceList);
       addIdentifications(digitalSpecimen, identificationList, referenceList);
       addIdentifiers(digitalSpecimen, identifierList);
       addRelationships(digitalSpecimen, relationshipList);
       addReference(digitalSpecimen.getOdsHasCitations(), digitalSpecimen.getId(), referenceList);
+      addAnnotation(digitalSpecimen, assertionList);
+      addChronometricAge(digitalSpecimen, chronometricAgeList);
       var media = specimenToDigitalMediaMapping.get(digitalSpecimen.getId());
       if (media != null && !media.isEmpty()) {
         addDigitalMedia(specimenToDigitalMediaMapping.get(digitalSpecimen.getId()),
@@ -155,7 +167,55 @@ public class DwcaService extends AbstractExportJobService {
     mappedList.put(GbifTerm.Reference, referenceList);
     mappedList.put(DwcTerm.ResourceRelationship, relationshipList);
     mappedList.put(AcTerm.Multimedia, digitalMediaList);
+    mappedList.put(ChronoTerm.ChronometricAge, chronometricAgeList);
     return mappedList;
+  }
+
+  private void addChronometricAge(DigitalSpecimen digitalSpecimen,
+      ArrayList<List<Pair<Term, String>>> chronometricAgeList) {
+    if (digitalSpecimen.getOdsHasChronometricAges() != null
+        && !digitalSpecimen.getOdsHasChronometricAges().isEmpty()) {
+      for (var chronometricAge : digitalSpecimen.getOdsHasChronometricAges()) {
+        var chronometricAgeRecord = new ArrayList<Pair<Term, String>>();
+        chronometricAgeRecord.add(Pair.of(DwcaTerm.ID, digitalSpecimen.getId()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeID,
+            chronometricAge.getChronoChronometricAgeID()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.verbatimChronometricAge,
+            chronometricAge.getChronoVerbatimChronometricAge()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeProtocol,
+            chronometricAge.getChronoChronometricAgeProtocol()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.uncalibratedChronometricAge,
+            chronometricAge.getChronoUncalibratedChronometricAge()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeConversionProtocol,
+            chronometricAge.getChronoChronometricAgeConversionProtocol()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.earliestChronometricAge,
+            convertValueToString(chronometricAge.getChronoEarliestChronometricAge())));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.earliestChronometricAgeReferenceSystem,
+            chronometricAge.getChronoEarliestChronometricAgeReferenceSystem()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.latestChronometricAge,
+            convertValueToString(chronometricAge.getChronoLatestChronometricAge())));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.latestChronometricAgeReferenceSystem,
+            chronometricAge.getChronoLatestChronometricAgeReferenceSystem()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeUncertaintyInYears,
+            getStringValue(chronometricAge.getChronoChronometricAgeUncertaintyInYears())));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeUncertaintyMethod,
+            chronometricAge.getChronoChronometricAgeUncertaintyMethod()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.materialDated,
+            chronometricAge.getChronoMaterialDated()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.materialDatedID,
+            chronometricAge.getChronoMaterialDatedID()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.materialDatedRelationship,
+            chronometricAge.getChronoMaterialDatedRelationship()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeDeterminedBy, retrieveCombinedAgentName(chronometricAge.getOdsHasAgents(), null)));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeDeterminedDate,
+            chronometricAge.getChronoChronometricAgeDeterminedDate()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeReferences,
+            chronometricAge.getChronoChronometricAgeReferences()));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeRemarks,
+            chronometricAge.getChronoChronometricAgeRemarks()));
+        chronometricAgeList.add(chronometricAgeRecord);
+      }
+    }
   }
 
   private void mapEvent(DigitalSpecimen digitalSpecimen,
@@ -484,9 +544,9 @@ public class DwcaService extends AbstractExportJobService {
         digitalSpecimen.getDwcDataGeneralizations()));
     occurrenceList.add(Pair.of(DwcTerm.occurrenceID,
         retrieveIdentifier(digitalSpecimen,
-            List.of("dwc:occurrenceID", "abcd:unitGUID", "abcd:unitID"))));
+            List.of(OCCURRENCE_ID, UNIT_GUID, UNIT_ID))));
     occurrenceList.add(Pair.of(DwcTerm.catalogNumber,
-        retrieveIdentifier(digitalSpecimen, List.of("dwc:catalogNumber", "abcd:unitID"))));
+        retrieveIdentifier(digitalSpecimen, List.of("dwc:catalogNumber", UNIT_ID))));
     occurrenceList.add(Pair.of(DwcTerm.recordedBy,
         retrieveCombinedAgentName(digitalSpecimen.getOdsHasAgents(), "collector")));
     occurrenceList.add(Pair.of(DwcTerm.recordNumber,
@@ -689,6 +749,49 @@ public class DwcaService extends AbstractExportJobService {
     relationshipRecord.add(Pair.of(DwcTerm.relationshipRemarks,
         relationship.getDwcRelationshipRemarks()));
     return relationshipRecord;
+  }
+
+  // Collect any assertion on either specimen or associated first event (as only first event is included in the occurrence record)
+  private void addAnnotation(DigitalSpecimen digitalSpecimen,
+      ArrayList<List<Pair<Term, String>>> assertionList) {
+    if (digitalSpecimen.getOdsHasAssertions() != null && !digitalSpecimen.getOdsHasAssertions()
+        .isEmpty()) {
+      for (var assertion : digitalSpecimen.getOdsHasAssertions()) {
+        mapAssertion(digitalSpecimen, assertionList, assertion);
+      }
+    }
+    if (digitalSpecimen.getOdsHasEvents() != null && !digitalSpecimen.getOdsHasEvents().isEmpty()) {
+      var event = digitalSpecimen.getOdsHasEvents().getFirst();
+      if (event.getOdsHasAssertions() != null && !event.getOdsHasAssertions().isEmpty()) {
+        for (var assertion : event.getOdsHasAssertions()) {
+          mapAssertion(digitalSpecimen, assertionList, assertion);
+        }
+      }
+    }
+  }
+
+  private void mapAssertion(DigitalSpecimen digitalSpecimen,
+      ArrayList<List<Pair<Term, String>>> assertionList, Assertion assertion) {
+    var assertionRecord = new ArrayList<Pair<Term, String>>();
+    assertionRecord.add(Pair.of(DwcaTerm.ID, digitalSpecimen.getId()));
+    assertionRecord.add(Pair.of(DwcTerm.measurementID, assertion.getDwcMeasurementID()));
+    assertionRecord.add(Pair.of(DwcTerm.occurrenceID,
+        retrieveIdentifier(digitalSpecimen, List.of(OCCURRENCE_ID, UNIT_GUID, UNIT_ID))));
+    assertionRecord.add(Pair.of(DwcTerm.measurementType, assertion.getDwcMeasurementType()));
+    assertionRecord.add(Pair.of(ObisTerm.measurementTypeID, assertion.getDwciriMeasurementType()));
+    assertionRecord.add(Pair.of(DwcTerm.measurementValue, assertion.getDwcMeasurementValue()));
+    assertionRecord.add(
+        Pair.of(ObisTerm.measurementValueID, assertion.getDwciriMeasurementValue()));
+    assertionRecord.add(
+        Pair.of(DwcTerm.measurementAccuracy, assertion.getDwcMeasurementAccuracy()));
+    assertionRecord.add(Pair.of(DwcTerm.measurementUnit, assertion.getDwcMeasurementUnit()));
+    assertionRecord.add(Pair.of(ObisTerm.measurementUnitID, assertion.getDwciriMeasurementUnit()));
+    assertionRecord.add(
+        Pair.of(DwcTerm.measurementDeterminedDate, assertion.getDwcMeasurementDeterminedDate()));
+    assertionRecord.add(Pair.of(DwcTerm.measurementDeterminedBy,
+        retrieveCombinedAgentName(assertion.getOdsHasAgents(), "measurer")));
+    assertionRecord.add(Pair.of(DwcTerm.measurementRemarks, assertion.getDwcMeasurementRemarks()));
+    assertionList.add(assertionRecord);
   }
 
   private Map<String, List<DigitalMedia>> createSpecimenToMediaMapping(
