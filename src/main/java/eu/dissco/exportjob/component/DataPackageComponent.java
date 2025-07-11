@@ -69,21 +69,22 @@ public class DataPackageComponent {
     return templateMap;
   }
 
-  private void extractAbstract(XMLEvent element, HashMap<String, String> templateMap, XMLEventReader xmlEventReader)
+  private void extractAbstract(XMLEvent element, HashMap<String, String> templateMap,
+      XMLEventReader xmlEventReader)
       throws XMLStreamException {
     var stringBuilder = new StringBuilder();
     var xmlElement = "abstract";
     if (isStartElement(element, xmlElement)) {
       var nextElement = xmlEventReader.nextEvent();
       while (nextElement != null && !isEndElement(nextElement, xmlElement)) {
-        if (nextElement.isCharacters()){
-          stringBuilder.append(nextElement.asCharacters().getData().trim());
+        if (nextElement.isCharacters()) {
+          stringBuilder.append(nextElement.asCharacters().getData().trim().replace("\"", "'"));
         }
         nextElement = xmlEventReader.nextEvent();
-        }
-      templateMap.put("description", stringBuilder.toString());
       }
+      templateMap.put("description", stringBuilder.toString());
     }
+  }
 
   private boolean isEndElement(XMLEvent element, String field) {
     if (element != null) {
@@ -100,7 +101,8 @@ public class DataPackageComponent {
     if (isStartElement(element, templateElement)) {
       var nextElement = xmlEventReader.nextEvent();
       if (nextElement.isCharacters()) {
-        templateMap.put(templateElement, nextElement.asCharacters().getData().trim());
+        templateMap.put(templateElement,
+            nextElement.asCharacters().getData().trim().replace("\"", "'"));
       }
     }
   }
