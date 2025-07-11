@@ -46,13 +46,14 @@ public abstract class AbstractExportJobService {
     try {
       exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING);
       var uploadData = processRequest(jobRequest);
-      postProcessResults(jobRequest);
       if (uploadData) {
+        postProcessResults(jobRequest);
         var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()),
             jobRequest.jobId(), extensionMap.get(environment.getActiveProfiles()[0]));
         log.info("S3 results available at {}", url);
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), url);
       } else {
+        log.warn("No results found for job {}", jobRequest.jobId());
         exporterBackendClient.markJobAsComplete(jobRequest.jobId(), null);
       }
       log.info("Successfully completed job {}", jobRequest.jobId());
