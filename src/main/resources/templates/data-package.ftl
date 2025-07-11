@@ -5,10 +5,10 @@
   <#if licenseName?? || identifier?? >
   "licenses" : [ {
     <#if licenseName??>
-    "name" : "${licenseName!}",
+    "name" : "${licenseName!}"
     </#if>
     <#if identifier??>
-    "title" : "${identifier!}"
+    , "title" : "${identifier!}"
     </#if>
   } ],
   </#if>
