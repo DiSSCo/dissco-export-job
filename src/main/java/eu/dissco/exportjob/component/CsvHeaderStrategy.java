@@ -1,7 +1,5 @@
 package eu.dissco.exportjob.component;
 
-// 2. mappingStrategy
-
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import java.lang.reflect.Field;
@@ -19,10 +17,10 @@ import java.util.Map;
  */
 public class CsvHeaderStrategy<T> extends HeaderColumnNameTranslateMappingStrategy<T> {
 
-  private final boolean headerPresent;
+  private final boolean skipHeader;
 
-  public CsvHeaderStrategy(Class<T> type, boolean headerPresent) {
-    this.headerPresent = headerPresent;
+  public CsvHeaderStrategy(Class<T> type, boolean skipHeader) {
+    this.skipHeader = skipHeader;
     Map<String, String> map = new HashMap<>();
     for (Field field : type.getDeclaredFields()) {
       map.put(field.getName(), field.getName());
@@ -37,7 +35,7 @@ public class CsvHeaderStrategy<T> extends HeaderColumnNameTranslateMappingStrate
     for (int i = 0; i < result.length; i++) {
       result[i] = getColumnName(i);
     }
-    if (headerPresent) {
+    if (skipHeader) {
       return new String[0];
     } else {
       return result;

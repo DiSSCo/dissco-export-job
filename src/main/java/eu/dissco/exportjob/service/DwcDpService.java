@@ -153,12 +153,12 @@ public class DwcDpService extends AbstractExportJobService {
   }
 
   private static void writeRecordsToFile(DwcDpClasses value, List<byte[]> records, FileSystem fs,
-      boolean headerPresent)
+      boolean skipHeader)
       throws IOException, ClassNotFoundException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
     var path = fs.getPath(value.getFileName());
     try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
         StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
-      var csvWriter = getCsvWriter(writer, value.getClazz(), headerPresent);
+      var csvWriter = getCsvWriter(writer, value.getClazz(), skipHeader);
       for (byte[] byteArray : records) {
         var bais = new ByteArrayInputStream(byteArray);
         var objectis = new ObjectInputStream(bais);
@@ -169,9 +169,9 @@ public class DwcDpService extends AbstractExportJobService {
   }
 
   private static StatefulBeanToCsv<Object> getCsvWriter(BufferedWriter writer, Class<?> clazz,
-      boolean headerPresent) {
+      boolean skipHeader) {
     return new StatefulBeanToCsvBuilder<>(writer).withMappingStrategy(
-        new CsvHeaderStrategy(clazz, headerPresent)).build();
+        new CsvHeaderStrategy<>((Class<Object>) clazz, skipHeader)).build();
   }
 
   private void mapRelationship(DigitalSpecimen digitalSpecimen,
@@ -264,7 +264,7 @@ public class DwcDpService extends AbstractExportJobService {
   }
 
 
-  private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs, boolean headerPresent)
+  private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs, boolean skipHeader)
       throws FailedProcessingException {
     int start = 0;
     boolean continueLoop = true;
@@ -279,7 +279,7 @@ public class DwcDpService extends AbstractExportJobService {
         containsRecords = true;
         log.info("Writing {} records to csv: {}", records.size(), value.getFileName());
         try {
-          writeRecordsToFile(value, records, fs, headerPresent);
+          writeRecordsToFile(value, records, fs, skipHeader);
         } catch (IOException | CsvDataTypeMismatchException | CsvRequiredFieldEmptyException |
                  ClassNotFoundException e) {
           log.error("Failed to write records to zipFile", e);
