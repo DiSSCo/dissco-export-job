@@ -31,10 +31,12 @@ import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.component.CsvHeaderStrategy;
 import eu.dissco.exportjob.component.DataPackageComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
@@ -77,6 +79,7 @@ import eu.dissco.exportjob.schema.OdsHasRole;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -149,12 +152,13 @@ public class DwcDpService extends AbstractExportJobService {
     return tableMap;
   }
 
-  private static void writeRecordsToFile(DwcDpClasses value, List<byte[]> records, FileSystem fs)
+  private static void writeRecordsToFile(DwcDpClasses value, List<byte[]> records, FileSystem fs,
+      boolean skipHeader)
       throws IOException, ClassNotFoundException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
     var path = fs.getPath(value.getFileName());
     try (var writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8,
         StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
-      var csvWriter = new StatefulBeanToCsvBuilder<>(writer).build();
+      var csvWriter = getCsvWriter(writer, value.getClazz(), skipHeader);
       for (byte[] byteArray : records) {
         var bais = new ByteArrayInputStream(byteArray);
         var objectis = new ObjectInputStream(bais);
@@ -162,6 +166,12 @@ public class DwcDpService extends AbstractExportJobService {
         csvWriter.write(object);
       }
     }
+  }
+
+  private static StatefulBeanToCsv<Object> getCsvWriter(BufferedWriter writer, Class<?> clazz,
+      boolean skipHeader) {
+    return new StatefulBeanToCsvBuilder<>(writer).withMappingStrategy(
+        new CsvHeaderStrategy<>((Class<Object>) clazz, skipHeader)).build();
   }
 
   private void mapRelationship(DigitalSpecimen digitalSpecimen,
@@ -230,7 +240,8 @@ public class DwcDpService extends AbstractExportJobService {
     try (var fs = FileSystems.newFileSystem(zipFile.toPath(), Map.of("create", "true"))) {
       var filesContainingRecords = new HashSet<DwcDpClasses>();
       for (DwcDpClasses value : DwcDpClasses.values()) {
-        var containsRecords = postProcessDwcDpClass(value, fs);
+        var containsRecords = postProcessDwcDpClass(value, fs,
+            filesContainingRecords.contains(value));
         if (containsRecords) {
           filesContainingRecords.add(value);
         }
@@ -253,7 +264,7 @@ public class DwcDpService extends AbstractExportJobService {
   }
 
 
-  private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs)
+  private boolean postProcessDwcDpClass(DwcDpClasses value, FileSystem fs, boolean skipHeader)
       throws FailedProcessingException {
     int start = 0;
     boolean continueLoop = true;
@@ -268,7 +279,7 @@ public class DwcDpService extends AbstractExportJobService {
         containsRecords = true;
         log.info("Writing {} records to csv: {}", records.size(), value.getFileName());
         try {
-          writeRecordsToFile(value, records, fs);
+          writeRecordsToFile(value, records, fs, skipHeader);
         } catch (IOException | CsvDataTypeMismatchException | CsvRequiredFieldEmptyException |
                  ClassNotFoundException e) {
           log.error("Failed to write records to zipFile", e);
