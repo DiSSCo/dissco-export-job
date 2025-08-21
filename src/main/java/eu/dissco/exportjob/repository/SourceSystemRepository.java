@@ -2,16 +2,13 @@ package eu.dissco.exportjob.repository;
 
 import static eu.dissco.exportjob.database.jooq.Tables.SOURCE_SYSTEM;
 
-import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 @Repository
-@Profile({Profiles.DWC_DP, Profiles.DWCA})
 @RequiredArgsConstructor
 public class SourceSystemRepository {
 
