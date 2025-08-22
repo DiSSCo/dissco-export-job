@@ -21,7 +21,6 @@ public class DwcDpIdentification implements Serializable {
     private String taxonFormula;
     private String typeStatus;
     private String typeDesignationType;
-    private String typifiedName;
     private String identifiedBy;
     private String identifiedByID;
     private String dateIdentified;

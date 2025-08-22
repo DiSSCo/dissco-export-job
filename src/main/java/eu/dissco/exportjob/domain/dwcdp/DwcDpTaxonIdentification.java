@@ -11,7 +11,7 @@ public class DwcDpTaxonIdentification implements Serializable {
     private static final long serialVersionUID = 1L;
     private String identificationID;
     private String taxonID;
-    private Integer taxonOrder;
+    private Integer taxonSortOrder;
     private String higherClassificationName;
     private String higherClassificationRank;
     private String scientificName;

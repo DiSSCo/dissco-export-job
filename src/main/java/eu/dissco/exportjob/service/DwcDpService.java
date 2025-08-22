@@ -348,7 +348,7 @@ public class DwcDpService extends AbstractExportJobService {
               mapMaterial(digitalSpecimen, results, eventId);
               mapChronometricAge(digitalSpecimen, results, eventId);
               mapIdentifiers(digitalSpecimen, results);
-              mapOccurrence(digitalSpecimen, results);
+              mapOccurrence(digitalSpecimen, results, eventId);
               mapIdentification(digitalSpecimen, results);
               mapRelationships(digitalSpecimen, results);
               mapMaterialMedia(digitalSpecimen, results);
@@ -681,11 +681,11 @@ public class DwcDpService extends AbstractExportJobService {
 
 
   private void mapOccurrence(DigitalSpecimen digitalSpecimen,
-      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+      Map<DwcDpClasses, List<Pair<String, Object>>> results, String eventId) {
     for (var event : digitalSpecimen.getOdsHasEvents()) {
       var dwcDpOccurrence = new DwcDpOccurrence();
       dwcDpOccurrence.setOccurrenceID(event.getId());
-      dwcDpOccurrence.setEventID(event.getId());
+      dwcDpOccurrence.setEventID(eventId);
       dwcDpOccurrence.setOrganismQuantity(digitalSpecimen.getDwcOrganismQuantity());
       dwcDpOccurrence.setOrganismQuantityType(digitalSpecimen.getDwcOrganismQuantityType());
       dwcDpOccurrence.setSex(event.getDwcSex());
