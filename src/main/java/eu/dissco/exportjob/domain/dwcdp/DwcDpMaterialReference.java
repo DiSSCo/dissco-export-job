@@ -11,4 +11,5 @@ public class DwcDpMaterialReference implements Serializable {
   private static final long serialVersionUID = 1L;
   private String referenceID;
   private String materialEntityID;
+  private String relationshipType;
 }

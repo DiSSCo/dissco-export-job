@@ -11,7 +11,12 @@ public class DwcDpMaterialMedia implements Serializable {
   private static final long serialVersionUID = 1L;
   private String mediaID;
   private String materialEntityID;
-  private String mediaSubjectCategory;
-  private String mediaSubjectCategoryIRI;
-  private String mediaSubjectCategoryVocabulary;
+  private String subjectCategory;
+  private String subjectCategoryIRI;
+  private String subjectCategorySource;
+  private String subjectPartLiteral;
+  private String subjectPart;
+  private String subjectOrientationLiteral;
+  private String subjectOrientation;
+  private String physicalSetting;
 }

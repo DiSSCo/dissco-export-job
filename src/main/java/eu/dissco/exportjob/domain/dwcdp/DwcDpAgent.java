@@ -11,7 +11,6 @@ public class DwcDpAgent implements Serializable {
   private static final long serialVersionUID = 1L;
   private String agentID;
   private String agentType;
-  private String agentTypeIRI;
-  private String agentTypeVocabulary;
   private String preferredAgentName;
+  private String agentRemarks;
 }

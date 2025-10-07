@@ -1,7 +1,3 @@
 # Jul 1 2025
 # Issue with GBIF library, is not used in the project.
 CVE-2025-52999
-
-# Aug 18 2025 - Spring needs to update
-# Issue with netty
-CVE-2025-55163

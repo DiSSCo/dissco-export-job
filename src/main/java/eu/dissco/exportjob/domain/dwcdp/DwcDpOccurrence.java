@@ -11,6 +11,7 @@ public class DwcDpOccurrence implements Serializable {
   private static final long serialVersionUID = 1L;
   private String occurrenceID;
   private String eventID;
+  private String isPartOfOccurrenceID;
   private String surveyTargetID;
   private String recordedBy;
   private String recordedByID;
@@ -25,6 +26,7 @@ public class DwcDpOccurrence implements Serializable {
   private String establishmentMeans;
   private String degreeOfEstablishment;
   private String pathway;
+  private String substrate;
   private String occurrenceStatus;
   private String occurrenceReferences;
   private String informationWithheld;
@@ -33,9 +35,9 @@ public class DwcDpOccurrence implements Serializable {
   private String organismID;
   private String organismScope;
   private String organismName;
+  private String causeOfDeath;
   private String organismRemarks;
   private String verbatimIdentification;
-  private String taxonFormula;
   private String identifiedBy;
   private String identifiedByID;
   private String dateIdentified;
@@ -43,27 +45,56 @@ public class DwcDpOccurrence implements Serializable {
   private String identificationVerificationStatus;
   private String identificationRemarks;
   private String taxonID;
-  private String higherClassificationName;
-  private String higherClassificationRank;
+  private String scientificNameID;
   private String scientificName;
+  private String scientificNameAuthorship;
+  private String vernacularName;
   private String taxonRank;
-  private String taxonRemarks;
+  private String externalClassificationSource;
+  private String feedbackURL;
 
   public boolean isEmpty() {
-    return occurrenceID == null && eventID == null && surveyTargetID == null &&
-        recordedBy == null && recordedByID == null && organismQuantity == null &&
-        organismQuantityType == null && sex == null && lifeStage == null &&
-        reproductiveCondition == null && caste == null && behavior == null &&
-        vitality == null && establishmentMeans == null && degreeOfEstablishment == null &&
-        pathway == null && occurrenceStatus == null && occurrenceReferences == null &&
-        informationWithheld == null && dataGeneralizations == null &&
-        occurrenceRemarks == null && organismID == null && organismScope == null &&
-        organismName == null && organismRemarks == null && verbatimIdentification == null &&
-        taxonFormula == null && identifiedBy == null && identifiedByID == null &&
-        dateIdentified == null && identificationReferences == null &&
-        identificationVerificationStatus == null && identificationRemarks == null &&
-        taxonID == null && higherClassificationName == null &&
-        higherClassificationRank == null && scientificName == null &&
-        taxonRank == null && taxonRemarks == null;
+    return
+        (isPartOfOccurrenceID == null || isPartOfOccurrenceID.isBlank()) &&
+        (surveyTargetID == null || surveyTargetID.isBlank()) &&
+        (recordedBy == null || recordedBy.isBlank()) &&
+        (recordedByID == null || recordedByID.isBlank()) &&
+        (organismQuantity == null || organismQuantity.isBlank()) &&
+        (organismQuantityType == null || organismQuantityType.isBlank()) &&
+        (sex == null || sex.isBlank()) &&
+        (lifeStage == null || lifeStage.isBlank()) &&
+        (reproductiveCondition == null || reproductiveCondition.isBlank()) &&
+        (caste == null || caste.isBlank()) &&
+        (behavior == null || behavior.isBlank()) &&
+        (vitality == null || vitality.isBlank()) &&
+        (establishmentMeans == null || establishmentMeans.isBlank()) &&
+        (degreeOfEstablishment == null || degreeOfEstablishment.isBlank()) &&
+        (pathway == null || pathway.isBlank()) &&
+        (substrate == null || substrate.isBlank()) &&
+        (occurrenceStatus == null || occurrenceStatus.isBlank()) &&
+        (occurrenceReferences == null || occurrenceReferences.isBlank()) &&
+        (informationWithheld == null || informationWithheld.isBlank()) &&
+        (dataGeneralizations == null || dataGeneralizations.isBlank()) &&
+        (occurrenceRemarks == null || occurrenceRemarks.isBlank()) &&
+        (organismID == null || organismID.isBlank()) &&
+        (organismScope == null || organismScope.isBlank()) &&
+        (organismName == null || organismName.isBlank()) &&
+        (causeOfDeath == null || causeOfDeath.isBlank()) &&
+        (organismRemarks == null || organismRemarks.isBlank()) &&
+        (verbatimIdentification == null || verbatimIdentification.isBlank()) &&
+        (identifiedBy == null || identifiedBy.isBlank()) &&
+        (identifiedByID == null || identifiedByID.isBlank()) &&
+        (dateIdentified == null || dateIdentified.isBlank()) &&
+        (identificationReferences == null || identificationReferences.isBlank()) &&
+        (identificationVerificationStatus == null || identificationVerificationStatus.isBlank()) &&
+        (identificationRemarks == null || identificationRemarks.isBlank()) &&
+        (taxonID == null || taxonID.isBlank()) &&
+        (scientificNameID == null || scientificNameID.isBlank()) &&
+        (scientificName == null || scientificName.isBlank()) &&
+        (scientificNameAuthorship == null || scientificNameAuthorship.isBlank()) &&
+        (vernacularName == null || vernacularName.isBlank()) &&
+        (taxonRank == null || taxonRank.isBlank()) &&
+        (externalClassificationSource == null || externalClassificationSource.isBlank()) &&
+        (feedbackURL == null || feedbackURL.isBlank());
   }
 }

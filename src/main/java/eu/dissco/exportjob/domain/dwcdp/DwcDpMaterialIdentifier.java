@@ -13,6 +13,6 @@ public class DwcDpMaterialIdentifier implements Serializable {
   private String materialEntityID;
   private String identifierType;
   private String identifierTypeIRI;
-  private String identifierTypeVocabulary;
+  private String identifierTypeSource;
   private String identifierLanguage;
 }

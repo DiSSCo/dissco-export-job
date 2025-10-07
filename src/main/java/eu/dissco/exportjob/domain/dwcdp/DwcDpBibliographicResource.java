@@ -5,7 +5,7 @@ import java.io.Serializable;
 import lombok.Data;
 
 @Data
-public class DwcDpReference implements Serializable {
+public class DwcDpBibliographicResource implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
@@ -14,13 +14,19 @@ public class DwcDpReference implements Serializable {
   private String referenceType;
   private String bibliographicCitation;
   private String title;
-  private String issued;
-  private String identifier;
-  private String creator;
-  private String creatorID;
+  private String author;
+  private String authorID;
+  private String editor;
+  private String editorID;
   private String publisher;
   private String publisherID;
-  private String pagination;
-  private Boolean isPeerReviewed;
+  private String volume;
+  private String issue;
+  private String edition;
+  private String pages;
+  private String version;
+  private String issued;
+  private String accessed;
+  private Boolean peerReviewStatus;
   private String referenceRemarks;
 }
