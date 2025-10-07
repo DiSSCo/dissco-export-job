@@ -80,7 +80,6 @@ public abstract class AbstractExportJobService {
         processSearchResults(searchResult);
         lastId = searchResult.getLast().get(ID_FIELD).asText();
         resultsProcessed += searchResult.size();
-        keepSearching = false;
       }
     }
     elasticSearchRepository.shutdown();
