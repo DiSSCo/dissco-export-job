@@ -13,6 +13,7 @@ public class DwCDpMaterial implements Serializable {
   private String digitalSpecimenID;
   private String eventID;
   private String materialCategory;
+  private String discipline;
   private String materialEntityType;
   private String institutionCode;
   private String institutionID;
@@ -26,7 +27,7 @@ public class DwCDpMaterial implements Serializable {
   private String collectedByID;
   private String objectQuantity;
   private String objectQuantityType;
-  private String recordNumber;
+  private String collectorNumber;
   private String preparations;
   private String disposition;
   private String verbatimLabel;
@@ -41,7 +42,6 @@ public class DwCDpMaterial implements Serializable {
   private String derivationType;
   private String isPartOfMaterialEntityID;
   private String verbatimIdentification;
-  private String taxonFormula;
   private String typeStatus;
   private String typeDesignationType;
   private String typifiedName;
@@ -52,9 +52,13 @@ public class DwCDpMaterial implements Serializable {
   private String identificationVerificationStatus;
   private String identificationRemarks;
   private String taxonID;
-  private String higherClassificationName;
-  private String higherClassificationRank;
+  private String scientificNameID;
+  private String geoClassificationCode;
+  private String geoName;
   private String scientificName;
+  private String scientificNameAuthorship;
+  private String vernacularName;
   private String taxonRank;
-  private String taxonRemarks;
+  private String externalClassificationSource;
+  private String feedbackURL;
 }

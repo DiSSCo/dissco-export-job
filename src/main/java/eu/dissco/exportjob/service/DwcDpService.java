@@ -16,10 +16,13 @@ import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_ASSERTION;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_IDENTIFIER;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_MEDIA;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_REFERENCE;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MATERIAL_USAGE_POLICY;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MEDIA;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.MEDIA_USAGE_POLICY;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.OCCURRENCE;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.REFERENCE;
 import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.RELATIONSHIP;
+import static eu.dissco.exportjob.domain.dwcdp.DwcDpClasses.USAGE_POLICY;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_IDENTIFIERS;
 import static eu.dissco.exportjob.utils.ExportUtils.EXCLUDE_RELATIONSHIPS;
 import static eu.dissco.exportjob.utils.ExportUtils.convertValueToString;
@@ -42,6 +45,7 @@ import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgentIdentifier;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpBibliographicResource;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpChronometricAge;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpChronometricAgeAgent;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
@@ -55,11 +59,13 @@ import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialAssertion;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialIdentifier;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialMedia;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialReference;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMaterialUsagePolicy;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpMedia;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpMediaUsagePolicy;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpOccurrence;
-import eu.dissco.exportjob.domain.dwcdp.DwcDpReference;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpRelationship;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpTaxonIdentification;
+import eu.dissco.exportjob.domain.dwcdp.DwcDpUsagePolicy;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.DwcDpProperties;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -149,6 +155,9 @@ public class DwcDpService extends AbstractExportJobService {
     tableMap.put(GEOLOGICAL_CONTEXT, new ArrayList<>());
     tableMap.put(CHRONOMETRIC_AGE, new ArrayList<>());
     tableMap.put(CHRONOMETRIC_AGE_AGENT, new ArrayList<>());
+    tableMap.put(USAGE_POLICY, new ArrayList<>());
+    tableMap.put(MATERIAL_USAGE_POLICY, new ArrayList<>());
+    tableMap.put(MEDIA_USAGE_POLICY, new ArrayList<>());
     return tableMap;
   }
 
@@ -178,11 +187,11 @@ public class DwcDpService extends AbstractExportJobService {
       Map<DwcDpClasses, List<Pair<String, Object>>> results,
       EntityRelationship odsHasEntityRelationship) {
     var relationship = new DwcDpRelationship();
-    relationship.setRelationshipID(odsHasEntityRelationship.getId());
+    relationship.setResourceRelationshipID(odsHasEntityRelationship.getId());
     relationship.setSubjectResourceID(digitalSpecimen.getOdsPhysicalSpecimenID());
     relationship.setSubjectResourceType("MaterialEntity");
     relationship.setRelationshipType(odsHasEntityRelationship.getDwcRelationshipOfResource());
-    relationship.setRelatedResourceID(
+    relationship.setExternalRelatedResourceID(
         odsHasEntityRelationship.getOdsRelatedResourceURI().toString());
     relationship.setRelationshipRemarks(odsHasEntityRelationship.getDwcRelationshipRemarks());
     if (!odsHasEntityRelationship.getOdsHasAgents().isEmpty()) {
@@ -192,13 +201,13 @@ public class DwcDpService extends AbstractExportJobService {
           odsHasEntityRelationship.getOdsHasAgents().getFirst().getSchemaName());
     }
     if (odsHasEntityRelationship.getDwcRelationshipEstablishedDate() != null) {
-      relationship.setRelationshipEffectiveDate(
+      relationship.setRelationshipEstablishedDate(
           odsHasEntityRelationship.getDwcRelationshipEstablishedDate().toString());
     }
-    if (relationship.getRelationshipID() == null) {
-      relationship.setRelationshipID(generateHashID(relationship.toString()));
+    if (relationship.getResourceRelationshipID() == null) {
+      relationship.setResourceRelationshipID(generateHashID(relationship.toString()));
     }
-    results.get(RELATIONSHIP).add(Pair.of(relationship.getRelationshipID(), relationship));
+    results.get(RELATIONSHIP).add(Pair.of(relationship.getResourceRelationshipID(), relationship));
   }
 
   private void mapIdentifier(DigitalSpecimen digitalSpecimen,
@@ -443,7 +452,6 @@ public class DwcDpService extends AbstractExportJobService {
     if (odsAgent.getType() != null) {
       agent.setAgentType(odsAgent.getType().toString());
     }
-    agent.setAgentTypeVocabulary("https://schema.org/agent");
     agent.setPreferredAgentName(odsAgent.getSchemaName());
     if (agent.getAgentID() == null) {
       agent.setAgentID(generateHashID(agent.toString()));
@@ -457,19 +465,21 @@ public class DwcDpService extends AbstractExportJobService {
     if (digitalSpecimen.getOdsHasCitations() != null && !digitalSpecimen.getOdsHasCitations()
         .isEmpty()) {
       for (var citation : digitalSpecimen.getOdsHasCitations()) {
-        var reference = new DwcDpReference();
+        var reference = new DwcDpBibliographicResource();
         reference.setReferenceID(citation.getDctermsIdentifier());
         reference.setReferenceType(citation.getDctermsType());
         reference.setBibliographicCitation(citation.getDctermsBibliographicCitation());
         reference.setIssued(citation.getDctermsDate());
         reference.setTitle(citation.getDctermsTitle());
-        reference.setPagination(citation.getOdsPageNumber());
-        reference.setIsPeerReviewed(citation.getOdsIsPeerReviewed());
-        reference.setCreator(retrieveCombinedAgentName(citation.getOdsHasAgents(), "creator"));
-        reference.setCreatorID(retrieveCombinedAgentId(citation.getOdsHasAgents(), "creator"));
+        reference.setIssued(citation.getDctermsDate());
+        reference.setPages(citation.getOdsPageNumber());
+        reference.setPeerReviewStatus(citation.getOdsIsPeerReviewed());
+        reference.setAuthor(retrieveCombinedAgentName(citation.getOdsHasAgents(), "creator"));
+        reference.setAuthorID(retrieveCombinedAgentId(citation.getOdsHasAgents(), "creator"));
         reference.setPublisher(retrieveCombinedAgentName(citation.getOdsHasAgents(), "publisher"));
         reference.setPublisherID(
             retrieveCombinedAgentId(citation.getOdsHasAgents(), "publisher"));
+        reference.setReferenceRemarks(citation.getDctermsDescription());
         if (reference.getReferenceID() == null) {
           reference.setReferenceID(generateHashID(reference.toString()));
         }
@@ -530,32 +540,61 @@ public class DwcDpService extends AbstractExportJobService {
           if (media.getDctermsType() != null) {
             dpMedia.setMediaType(media.getDctermsType().toString());
           }
-          dpMedia.setMetadataLanguage(media.getAcMetadataLanguage());
+          dpMedia.setLanguage(media.getDctermsLanguage());
+          dpMedia.setDescription(media.getDctermsDescription());
+          dpMedia.setMetadataLanguageIRI(media.getAcMetadataLanguage());
           dpMedia.setMetadataLanguageLiteral(media.getAcMetadataLanguageLiteral());
-          dpMedia.setSubtype(media.getAcSubtype());
+          dpMedia.setSubtypeIRI(media.getAcSubtype());
           dpMedia.setSubtypeLiteral(media.getAcSubtypeLiteral());
           dpMedia.setComments(media.getAcComments());
-          dpMedia.setRights(media.getDctermsRights());
-          dpMedia.setUsageTerms(media.getXmpRightsUsageTerms());
-          dpMedia.setWebStatement(media.getXmpRightsWebStatement());
           dpMedia.setAccessURI(media.getAcAccessURI());
           dpMedia.setFormat(media.getDctermsFormat());
-          dpMedia.setSource(media.getDctermsSource());
+          dpMedia.setAvailable(media.getDctermsAvailable());
+          dpMedia.setComments(media.getAcComments());
+          dpMedia.setSubjectCategorySource(media.getAcSubjectCategoryVocabulary());
           dpMedia.setDescription(media.getDctermsDescription());
           dpMedia.setTag(String.join(", ", media.getAcTag()));
           dpMedia.setCreateDate(media.getXmpCreateDate());
+          dpMedia.setSubjectOrientationIRI(media.getAcSubjectOrientation());
+          dpMedia.setSubjectOrientationLiteral(media.getAcSubjectOrientationLiteral());
+          dpMedia.setSubjectPartIRI(media.getAcSubjectPart());
+          dpMedia.setSubjectPartLiteral(media.getAcSubjectPartLiteral());
+          dpMedia.setFrameRate(media.getAcFrameRate());
+          dpMedia.setResourceCreationTechnique(media.getAcResourceCreationTechnique());
           dpMedia.setTimeOfDay(media.getAcTimeOfDay());
           dpMedia.setCaptureDevice(media.getAcCaptureDevice());
           dpMedia.setResourceCreationTechnique(media.getAcResourceCreationTechnique());
           dpMedia.setModified(media.getDctermsModified());
           dpMedia.setLanguage(media.getDctermsLanguage());
-          dpMedia.setVariant(media.getAcVariant());
           dpMedia.setVariantLiteral(media.getAcVariantLiteral());
+          dpMedia.setVariantIRI(media.getAcVariant());
           dpMedia.setVariantDescription(media.getAcVariantDescription());
-          dpMedia.setPixelXDimension(convertValueToString(media.getExifPixelXDimension()));
-          dpMedia.setPixelYDimension(convertValueToString(media.getExifPixelYDimension()));
+          dpMedia.setPixelXDimension(media.getExifPixelXDimension());
+          dpMedia.setPixelYDimension(media.getExifPixelYDimension());
+          mapUsagePolicyMedia(media, results);
           results.get(MEDIA).add(Pair.of(dpMedia.getMediaID(), dpMedia));
         });
+  }
+
+  private void mapUsagePolicyMedia(DigitalMedia media,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    var usagePolicy = new DwcDpUsagePolicy();
+    usagePolicy.setRights(media.getDctermsRights());
+    usagePolicy.setUsageTerms(media.getXmpRightsUsageTerms());
+    usagePolicy.setWebStatement(media.getXmpRightsWebStatement());
+    usagePolicy.setOwner(retrieveCombinedAgentName(media.getOdsHasAgents(), "rights-owner"));
+    usagePolicy.setOwnerID(retrieveCombinedAgentId(media.getOdsHasAgents(), "rights-owner"));
+    if (usagePolicy.getUsagePolicyID() == null) {
+      usagePolicy.setUsagePolicyID(generateHashID(usagePolicy.toString()));
+    }
+    if (!usagePolicy.isEmpty()) {
+      results.get(USAGE_POLICY).add(Pair.of(usagePolicy.getUsagePolicyID(), usagePolicy));
+      var mediaUsagePolicy = new DwcDpMediaUsagePolicy();
+      mediaUsagePolicy.setMediaID(media.getId());
+      mediaUsagePolicy.setUsagePolicyID(usagePolicy.getUsagePolicyID());
+      results.get(MEDIA_USAGE_POLICY)
+          .add(Pair.of(generateHashID(mediaUsagePolicy.toString()), mediaUsagePolicy));
+    }
   }
 
   private void mapMaterialMedia(DigitalSpecimen digitalSpecimen,
@@ -574,7 +613,6 @@ public class DwcDpService extends AbstractExportJobService {
 
   private void mapRelationships(DigitalSpecimen digitalSpecimen,
       Map<DwcDpClasses, List<Pair<String, Object>>> results) {
-
     digitalSpecimen.getOdsHasEntityRelationships().stream()
         .filter(er -> !EXCLUDE_RELATIONSHIPS.contains(er.getDwcRelationshipOfResource())).forEach(
             odsHasEntityRelationship -> mapRelationship(digitalSpecimen, results,
@@ -587,8 +625,7 @@ public class DwcDpService extends AbstractExportJobService {
     for (var odsHasIdentification : digitalSpecimen.getOdsHasIdentifications()) {
       var identification = new DwcDpIdentification();
       identification.setIdentificationID(odsHasIdentification.getId());
-      identification.setBasedOnMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
-      identification.setIdentificationType("MaterialEntity");
+      identification.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
       identification.setVerbatimIdentification(odsHasIdentification.getDwcVerbatimIdentification());
       identification.setIsAcceptedIdentification(
           odsHasIdentification.getOdsIsVerifiedIdentification());
@@ -646,10 +683,25 @@ public class DwcDpService extends AbstractExportJobService {
       taxonIdentification.setIdentificationID(identificationId);
       taxonIdentification.setTaxonID(taxon.getDwcTaxonID());
       taxonIdentification.setScientificName(taxon.getDwcScientificName());
+      taxonIdentification.setScientificNameAuthorship(taxon.getDwcScientificNameAuthorship());
+      taxonIdentification.setVernacularName(taxon.getDwcVernacularName());
       taxonIdentification.setTaxonRank(taxon.getDwcTaxonRank());
-      taxonIdentification.setTaxonRemarks(taxon.getDwcTaxonRemarks());
-      taxonIdentification.setHigherClassificationName(taxon.getDwcKingdom());
-      taxonIdentification.setHigherClassificationRank("dwc:kingdom");
+      taxonIdentification.setKingdom(taxon.getDwcKingdom());
+      taxonIdentification.setPhylum(taxon.getDwcPhylum());
+      taxonIdentification.setClazz(taxon.getDwcClass());
+      taxonIdentification.setOrder(taxon.getDwcOrder());
+      taxonIdentification.setFamily(taxon.getDwcFamily());
+      taxonIdentification.setSubfamily(taxon.getDwcSubfamily());
+      taxonIdentification.setGenus(taxon.getDwcGenus());
+      taxonIdentification.setGenericName(taxon.getDwcGenericName());
+      taxonIdentification.setSubgenus(taxon.getDwcSubgenus());
+      taxonIdentification.setInfragenericEpithet(taxon.getDwcInfragenericEpithet());
+      taxonIdentification.setSpecificEpithet(taxon.getDwcSpecificEpithet());
+      taxonIdentification.setInfraspecificEpithet(taxon.getDwcInfraspecificEpithet());
+      taxonIdentification.setCultivarEpithet(taxon.getDwcCultivarEpithet());
+      taxonIdentification.setNomenclaturalCode(taxon.getDwcNomenclaturalCode());
+      taxonIdentification.setNomenclaturalStatus(taxon.getDwcNomenclaturalStatus());
+      taxonIdentification.setNamePublishedInYear(taxon.getDwcNamePublishedInYear());
       results.get(IDENTIFICATION_TAXON)
           .add(Pair.of(taxonIdentification.getTaxonID(), taxonIdentification));
     }
@@ -662,6 +714,7 @@ public class DwcDpService extends AbstractExportJobService {
     material.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
     material.setDigitalSpecimenID(digitalSpecimen.getId());
     material.setEventID(eventId);
+    material.setDiscipline(digitalSpecimen.getOdsTopicDiscipline().value());
     material.setInstitutionID(digitalSpecimen.getOdsOrganisationID());
     material.setInstitutionCode(digitalSpecimen.getOdsOrganisationCode());
     material.setOwnerInstitutionCode(digitalSpecimen.getOdsOwnerOrganisationCode());
@@ -671,12 +724,33 @@ public class DwcDpService extends AbstractExportJobService {
     material.setDisposition(digitalSpecimen.getDwcDisposition());
     material.setCatalogNumber(
         retrieveIdentifier(digitalSpecimen, List.of("dwc:catalogNumber", "abcd:unitID")));
-    material.setRecordNumber(
+    material.setCollectorNumber(
         retrieveIdentifier(digitalSpecimen, List.of("dwc:recordNumber", "abcd:recordURI")));
     material.setVerbatimLabel(digitalSpecimen.getDwcVerbatimLabel());
     material.setInformationWithheld(digitalSpecimen.getDwcInformationWithheld());
     material.setDataGeneralizations(digitalSpecimen.getDwcDataGeneralizations());
+    material.setFeedbackURL(digitalSpecimen.getDctermsIdentifier());
+    mapUsagePolicySpecimen(digitalSpecimen, results);
     results.get(MATERIAL).add(Pair.of(material.getMaterialEntityID(), material));
+  }
+
+  private void mapUsagePolicySpecimen(DigitalSpecimen digitalSpecimen,
+      Map<DwcDpClasses, List<Pair<String, Object>>> results) {
+    var usagePolicy = new DwcDpUsagePolicy();
+    usagePolicy.setLicense(digitalSpecimen.getDctermsLicense());
+    usagePolicy.setAccessRights(digitalSpecimen.getDctermsAccessRights());
+    usagePolicy.setRightsHolder(digitalSpecimen.getDctermsRightsHolder());
+    if (usagePolicy.getUsagePolicyID() == null) {
+      usagePolicy.setUsagePolicyID(generateHashID(usagePolicy.toString()));
+    }
+    if (!usagePolicy.isEmpty()) {
+      results.get(USAGE_POLICY).add(Pair.of(usagePolicy.getUsagePolicyID(), usagePolicy));
+      var materialUsagePolicy = new DwcDpMaterialUsagePolicy();
+      materialUsagePolicy.setMaterialEntityID(digitalSpecimen.getOdsPhysicalSpecimenID());
+      materialUsagePolicy.setUsagePolicyID(usagePolicy.getUsagePolicyID());
+      results.get(MATERIAL_USAGE_POLICY)
+          .add(Pair.of(generateHashID(materialUsagePolicy.toString()), materialUsagePolicy));
+    }
   }
 
 
@@ -774,7 +848,7 @@ public class DwcDpService extends AbstractExportJobService {
             != null) {
           dwcDpEvent.setCoordinateUncertaintyInMeters(
               event.getOdsHasLocation().getOdsHasGeoreference()
-                  .getDwcCoordinateUncertaintyInMeters().intValue());
+                  .getDwcCoordinateUncertaintyInMeters());
         }
         dwcDpEvent.setCoordinatePrecision(
             event.getOdsHasLocation().getOdsHasGeoreference().getDwcCoordinatePrecision());
@@ -816,25 +890,25 @@ public class DwcDpService extends AbstractExportJobService {
       var geologicalContext = new DwcDpGeologicalContext();
       geologicalContext.setGeologicalContextID(odsHasGeologicalContext.getId());
       geologicalContext.setEventID(eventID);
-      geologicalContext.setEarliestEonOrLowestEonothem(
+      geologicalContext.setEarliestEonOrEonothem(
           odsHasGeologicalContext.getDwcEarliestEonOrLowestEonothem());
-      geologicalContext.setLatestEonOrHighestEonothem(
+      geologicalContext.setLatestEonOrEonothem(
           odsHasGeologicalContext.getDwcLatestEonOrHighestEonothem());
-      geologicalContext.setEarliestEraOrLowestErathem(
+      geologicalContext.setEarliestEraOrErathem(
           odsHasGeologicalContext.getDwcEarliestEraOrLowestErathem());
-      geologicalContext.setLatestEraOrHighestErathem(
+      geologicalContext.setLatestEraOrErathem(
           odsHasGeologicalContext.getDwcLatestEraOrHighestErathem());
-      geologicalContext.setEarliestPeriodOrLowestSystem(
+      geologicalContext.setEarliestPeriodOrSystem(
           odsHasGeologicalContext.getDwcEarliestPeriodOrLowestSystem());
-      geologicalContext.setLatestPeriodOrHighestSystem(
+      geologicalContext.setLatestPeriodOrSystem(
           odsHasGeologicalContext.getDwcLatestPeriodOrHighestSystem());
-      geologicalContext.setEarliestEpochOrLowestSeries(
+      geologicalContext.setEarliestEpochOrSeries(
           odsHasGeologicalContext.getDwcEarliestEpochOrLowestSeries());
-      geologicalContext.setLatestEpochOrHighestSeries(
+      geologicalContext.setLatestEpochOrSeries(
           odsHasGeologicalContext.getDwcLatestEpochOrHighestSeries());
-      geologicalContext.setEarliestAgeOrLowestStage(
+      geologicalContext.setEarliestStageOrAge(
           odsHasGeologicalContext.getDwcEarliestAgeOrLowestStage());
-      geologicalContext.setLatestAgeOrHighestStage(
+      geologicalContext.setLatestStageOrAge(
           odsHasGeologicalContext.getDwcLatestAgeOrHighestStage());
       geologicalContext.setLowestBiostratigraphicZone(
           odsHasGeologicalContext.getDwcLowestBiostratigraphicZone());

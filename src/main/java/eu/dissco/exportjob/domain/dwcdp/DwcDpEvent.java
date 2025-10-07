@@ -54,6 +54,7 @@ public class DwcDpEvent implements Serializable {
   private String county;
   private String municipality;
   private String locality;
+  private String siteNumber;
   private Double minimumElevationInMeters;
   private Double maximumElevationInMeters;
   private String verticalDatum;
@@ -65,7 +66,7 @@ public class DwcDpEvent implements Serializable {
   private Double decimalLatitude;
   private Double decimalLongitude;
   private String geodeticDatum;
-  private Integer coordinateUncertaintyInMeters;
+  private Double coordinateUncertaintyInMeters;
   private Double coordinatePrecision;
   private Double pointRadiusSpatialFit;
   private String footprintWKT;
@@ -78,7 +79,5 @@ public class DwcDpEvent implements Serializable {
   private String georeferenceProtocolID;
   private String georeferenceSources;
   private String georeferenceRemarks;
-  private String informationWithheld;
-  private String dataGeneralizations;
   private String preferredSpatialRepresentation;
 }

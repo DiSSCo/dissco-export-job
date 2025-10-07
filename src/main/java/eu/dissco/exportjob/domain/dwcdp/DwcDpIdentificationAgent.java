@@ -13,7 +13,7 @@ public class DwcDpIdentificationAgent implements Serializable {
     private String identificationID;
     private String agentRole;
     private String agentRoleIRI;
-    private String agentRoleVocabulary;
+    private String agentRoleSource;
     private Integer agentRoleOrder;
     private String agentRoleDate;
 }

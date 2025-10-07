@@ -13,6 +13,6 @@ public class DwcDpAgentIdentifier implements Serializable {
   private String agentID;
   private String identifierType;
   private String identifierTypeIRI;
-  private String identifierTypeVocabulary;
+  private String identifierTypeSource;
   private String identifierLanguage;
 }

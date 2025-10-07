@@ -20,10 +20,13 @@ public enum DwcDpClasses {
   MATERIAL_ASSERTION("material-assertion.csv", "material-assertion", DwcDpMaterialAssertion.class),
   EVENT_ASSERTION("event-assertion.csv", "event-assertion", DwcDpEventAssertion.class),
   MATERIAL_REFERENCE("material-reference.csv", "material-reference", DwcDpMaterialReference.class),
-  REFERENCE("reference.csv", "reference", DwcDpReference.class),
+  REFERENCE("reference.csv", "reference", DwcDpBibliographicResource.class),
   GEOLOGICAL_CONTEXT("geological-context.csv", "geological-context", DwcDpGeologicalContext.class),
   CHRONOMETRIC_AGE("chronometric-age.csv", "chronometric-age", DwcDpChronometricAge.class),
-  CHRONOMETRIC_AGE_AGENT("chronometric-age-agent-role.csv", "chronometric-age-agent-role", DwcDpChronometricAgeAgent.class);
+  CHRONOMETRIC_AGE_AGENT("chronometric-age-agent-role.csv", "chronometric-age-agent-role", DwcDpChronometricAgeAgent.class),
+  USAGE_POLICY("usage-policy.csv", "usage-policy", DwcDpUsagePolicy.class),
+  MATERIAL_USAGE_POLICY("material-usage-policy.csv", "material-usage-policy", DwcDpMaterialUsagePolicy.class),
+  MEDIA_USAGE_POLICY("media-usage-policy.csv", "media-usage-policy", DwcDpMediaUsagePolicy.class);
   
   
   private final String fileName;

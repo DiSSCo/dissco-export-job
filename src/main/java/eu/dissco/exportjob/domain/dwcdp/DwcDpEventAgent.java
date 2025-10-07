@@ -13,7 +13,7 @@ public class DwcDpEventAgent implements Serializable {
   private String eventID;
   private String agentRole;
   private String agentRoleIRI;
-  private String agentRoleVocabulary;
+  private String agentRoleSource;
   private Integer agentRoleOrder;
   private String agentRoleDate;
 }

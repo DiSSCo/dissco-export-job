@@ -6,14 +6,14 @@ import lombok.Data;
 
 @Data
 public class DwcDpChronometricAgeAgent implements Serializable {
-    
+
     @Serial
     private static final long serialVersionUID = 1L;
     private String agentID;
     private String chronometricAgeID;
     private String agentRole;
     private String agentRoleIRI;
-    private String agentRoleVocabulary;
+    private String agentRoleSource;
     private Integer agentRoleOrder;
     private String agentRoleDate;
 }
