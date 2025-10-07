@@ -21,7 +21,7 @@
   "profile" : "tabular-data-resource",
   "format" : "csv",
   "encoding" : "UTF-8",
-  "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/material.json",
+  "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/material.json",
   "path" : "material.csv"
   }
 </#if>
@@ -31,7 +31,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/agent.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/agent.json",
     "path" : "agent.csv"
   }
 </#if>
@@ -41,7 +41,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/agent-identifier.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/agent-identifier.json",
     "path" : "agent-identifier.csv"
   }
 </#if>
@@ -51,7 +51,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/event.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/event.json",
     "path" : "event.csv"
   }
 </#if>
@@ -61,7 +61,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/event-agent-role.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/event-agent-role.json",
     "path" : "event-agent-role.csv"
   }
 </#if>
@@ -71,7 +71,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/identification.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/identification.json",
     "path" : "identification.csv"
   }
 </#if>
@@ -81,7 +81,7 @@
   "profile" : "tabular-data-resource",
   "format" : "csv",
   "encoding" : "UTF-8",
-  "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/identification-agent-role.json",
+  "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/identification-agent-role.json",
   "path" : "identification-agent-role.csv"
   }
 </#if>
@@ -91,7 +91,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/material-identifier.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/material-identifier.json",
     "path" : "material-identifier.csv"
   }
 </#if>
@@ -101,7 +101,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/material-media.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/material-media.json",
     "path" : "material-media.csv"
   }
 </#if>
@@ -111,7 +111,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/media.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/media.json",
     "path" : "media.csv"
   }
 </#if>
@@ -121,7 +121,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/occurrence.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/occurrence.json",
     "path" : "occurrence.csv"
   }
 </#if>
@@ -131,7 +131,7 @@
     "profile" : "tabular-data-resource",
     "format" : "csv",
     "encoding" : "UTF-8",
-    "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/relationship.json",
+    "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/relationship.json",
     "path" : "relationship.csv"
   }
 </#if>
@@ -141,8 +141,38 @@
   "profile" : "tabular-data-resource",
   "format" : "csv",
   "encoding" : "UTF-8",
-  "schema" : "https://rs.gbif.org/sandbox/experimental/data-packages/dwc-dp/0.1/table-schemas/identification-taxon.json",
+  "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/identification-taxon.json",
   "path" : "identification-taxon.csv"
+  }
+</#if>
+<#if media_usage_policy??>
+  , {
+  "name" : "media-usage-policy",
+  "profile" : "tabular-data-resource",
+  "format" : "csv",
+  "encoding" : "UTF-8",
+  "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/media-usage-policy.json",
+  "path" : "media-usage-policy.csv"
+  }
+</#if>
+<#if material_usage_policy??>
+  , {
+  "name" : "material-usage-policy",
+  "profile" : "tabular-data-resource",
+  "format" : "csv",
+  "encoding" : "UTF-8",
+  "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/material-usage-policy.json",
+  "path" : "material-usage-policy.csv"
+  }
+</#if>
+<#if usage_policy??>
+  , {
+  "name" : "usage-policy",
+  "profile" : "tabular-data-resource",
+  "format" : "csv",
+  "encoding" : "UTF-8",
+  "schema" : "https://raw.githubusercontent.com/gbif/dwc-dp/0.1/dwc-dp/table-schemas/usage-policy.json",
+  "path" : "usage-policy.csv"
   }
 </#if>
 ],
