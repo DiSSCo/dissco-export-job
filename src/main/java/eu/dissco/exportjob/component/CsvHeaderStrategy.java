@@ -33,7 +33,11 @@ public class CsvHeaderStrategy<T> extends HeaderColumnNameTranslateMappingStrate
   public String[] generateHeader(T bean) throws CsvRequiredFieldEmptyException {
     String[] result = super.generateHeader(bean);
     for (int i = 0; i < result.length; i++) {
-      result[i] = getColumnName(i);
+      var columnName = getColumnName(i);
+      if (columnName.equals("clazz")){
+        columnName = "class";
+      }
+      result[i] = columnName;
     }
     if (skipHeader) {
       return new String[0];

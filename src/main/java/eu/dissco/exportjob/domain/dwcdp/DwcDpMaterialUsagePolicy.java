@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class DwcDpMaterialUsagePolicy implements Serializable {
 
-  public String usagePolicyID;
-  public String materialEntityID;
+  private String usagePolicyID;
+  private String materialEntityID;
 
 }
