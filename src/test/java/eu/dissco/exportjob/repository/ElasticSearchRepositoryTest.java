@@ -16,7 +16,8 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.dissco.exportjob.domain.SearchParam;
@@ -24,14 +25,11 @@ import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.properties.ElasticSearchProperties;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,7 +43,7 @@ import org.testcontainers.utility.DockerImageName;
 class ElasticSearchRepositoryTest {
 
   private static final DockerImageName ELASTIC_IMAGE = DockerImageName.parse(
-      "docker.elastic.co/elasticsearch/elasticsearch").withTag("8.7.1");
+      "docker.elastic.co/elasticsearch/elasticsearch").withTag("9.2.0");
   private static final String ELASTICSEARCH_USERNAME = "elastic";
   private static final String ELASTICSEARCH_PASSWORD = "s3cret";
   private static final ElasticsearchContainer container = new ElasticsearchContainer(
@@ -53,7 +51,7 @@ class ElasticSearchRepositoryTest {
   private static final String DIGITAL_SPECIMEN_INDEX = "digital-specimen";
   private static final String DIGITAL_MEDIA_INDEX = "digital-media";
   private static ElasticsearchClient client;
-  private static RestClient restClient;
+  private static Rest5Client restClient;
   private final ElasticSearchProperties properties = new ElasticSearchProperties();
   private ElasticSearchRepository elasticRepository;
 
@@ -62,22 +60,15 @@ class ElasticSearchRepositoryTest {
     // Create the elasticsearch container.
     container.start();
 
-    final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    credentialsProvider.setCredentials(AuthScope.ANY,
-        new UsernamePasswordCredentials(ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD));
+    var creds = Base64.getEncoder()
+        .encodeToString((ELASTICSEARCH_USERNAME + ":" + ELASTICSEARCH_PASSWORD).getBytes());
 
-    HttpHost host = new HttpHost("localhost",
-        container.getMappedPort(9200), "https");
-    final RestClientBuilder builder = RestClient.builder(host);
+    restClient = Rest5Client.builder(
+            new HttpHost("https", "localhost", container.getMappedPort(9200)))
+        .setDefaultHeaders(new Header[]{new BasicHeader("Authorization", "Basic " + creds)})
+        .setSSLContext(container.createSslContextFromCa()).build();
 
-    builder.setHttpClientConfigCallback(clientBuilder -> {
-      clientBuilder.setSSLContext(container.createSslContextFromCa());
-      clientBuilder.setDefaultCredentialsProvider(credentialsProvider);
-      return clientBuilder;
-    });
-    restClient = builder.build();
-
-    ElasticsearchTransport transport = new RestClientTransport(restClient,
+    ElasticsearchTransport transport = new Rest5ClientTransport(restClient,
         new JacksonJsonpMapper(MAPPER));
 
     client = new ElasticsearchClient(transport);
