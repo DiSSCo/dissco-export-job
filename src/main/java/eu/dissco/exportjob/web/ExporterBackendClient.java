@@ -18,10 +18,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Slf4j
 public class ExporterBackendClient {
 
-  @Qualifier("exporterClient")
   private final WebClient webClient;
   private final ObjectMapper mapper;
-  private final TokenAuthenticator tokenAuthenticator;
 
   public void updateJobState(UUID jobId, JobStateEndpoint stateEndpoint)
       throws FailedProcessingException {
@@ -30,7 +28,6 @@ public class ExporterBackendClient {
       webClient
           .method(HttpMethod.POST)
           .uri(uriBuilder -> uriBuilder.path("/" + jobId.toString() + endpoint).build())
-          .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
           .retrieve()
           .toBodilessEntity().toFuture().get();
     } catch (ExecutionException e) {
@@ -51,7 +48,6 @@ public class ExporterBackendClient {
       webClient
           .method(HttpMethod.POST)
           .uri(uriBuilder -> uriBuilder.path("/completed").build())
-          .header("Authorization", "Bearer " + tokenAuthenticator.getToken())
           .body(BodyInserters.fromValue(body))
           .retrieve()
           .toBodilessEntity().toFuture().get();

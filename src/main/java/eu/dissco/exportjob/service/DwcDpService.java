@@ -540,6 +540,8 @@ public class DwcDpService extends AbstractExportJobService {
           if (media.getDctermsType() != null) {
             dpMedia.setMediaType(media.getDctermsType().toString());
           }
+          dpMedia.setDescription(media.getDctermsDescription());
+          dpMedia.setTitle(media.getDctermsTitle());
           dpMedia.setLanguage(media.getDctermsLanguage());
           dpMedia.setDescription(media.getDctermsDescription());
           dpMedia.setMetadataLanguageIRI(media.getAcMetadataLanguage());

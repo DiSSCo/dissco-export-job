@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.given;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
-import eu.dissco.exportjob.properties.TokenProperties;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import okhttp3.mockwebserver.MockResponse;
