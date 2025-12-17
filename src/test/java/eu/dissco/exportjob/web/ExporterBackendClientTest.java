@@ -15,7 +15,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -24,8 +23,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 class ExporterBackendClientTest {
 
   private static MockWebServer mockServer;
-  @Mock
-  private TokenAuthenticator tokenAuthenticator;
   private ExporterBackendClient exporterBackendClient;
 
   @BeforeEach
@@ -34,7 +31,7 @@ class ExporterBackendClientTest {
     mockServer.start();
     WebClient webClient = WebClient.create(
         String.format("http://%s:%s", mockServer.getHostName(), mockServer.getPort()));
-    exporterBackendClient = new ExporterBackendClient(webClient, MAPPER, tokenAuthenticator);
+    exporterBackendClient = new ExporterBackendClient(webClient, MAPPER);
   }
 
   @AfterEach
