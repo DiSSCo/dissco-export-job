@@ -29,7 +29,9 @@ public class TestUtils {
   public static final String ID_FIELD = "dcterms:identifier";
   public static final String PHYS_ID_FIELD = "ods:physicalSpecimenID";
   public static final String SOURCE_SYSTEM_ID = "https://hdl.handle.net/TEST/Z1M-8WG-DCD";
+  public static final String SECOND_SOURCE_SYSTEM_ID = "https://hdl.handle.net/TEST/XXX-AAA-EEE";
   public static final String TEMP_FILE_NAME = "src/test/resources/tmp.zip";
+  public static final String EML = "<eml></dataset><dataset><title>Test Dataset</title></dataset></eml>";
 
 
   public static JobRequest givenJobRequest() {
@@ -84,7 +86,11 @@ public class TestUtils {
     return List.of(ID_FIELD, PHYS_ID_FIELD);
   }
 
+
   public static JsonNode givenSpecimenJson() throws JsonProcessingException {
+    return givenSpecimenJson(SOURCE_SYSTEM_ID);
+  }
+  public static JsonNode givenSpecimenJson(String sourceSystemId) throws JsonProcessingException {
     return MAPPER.readTree(
         """
             {
@@ -101,7 +107,9 @@ public class TestUtils {
               "ods:physicalSpecimenID": "79569268-d66d-4899-b3f7-aafeb13069d0",
               "ods:physicalSpecimenIDType": "Global",
               "ods:isKnownToContainMedia": true,
-              "ods:sourceSystemID": "https://hdl.handle.net/TEST/Z1M-8WG-DCD",
+              "ods:sourceSystemID": """ +
+              "\"" + sourceSystemId + "\","  +
+              """
               "ods:sourceSystemName": "NHMD Ornithology Collection",
               "ods:livingOrPreserved": "Preserved",
               "dcterms:license": "http://creativecommons.org/licenses/by/4.0/legalcode",

@@ -2,8 +2,10 @@ package eu.dissco.exportjob.service;
 
 import static eu.dissco.exportjob.domain.JobStateEndpoint.FAILED;
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
+import static eu.dissco.exportjob.utils.TestUtils.EML;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
 import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
+import static eu.dissco.exportjob.utils.TestUtils.SECOND_SOURCE_SYSTEM_ID;
 import static eu.dissco.exportjob.utils.TestUtils.SOURCE_SYSTEM_ID;
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
@@ -23,10 +25,13 @@ import eu.dissco.exportjob.component.DwcaZipWriter;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.exceptions.S3UploadException;
 import eu.dissco.exportjob.properties.IndexProperties;
+import eu.dissco.exportjob.properties.S3Properties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
 import eu.dissco.exportjob.web.ExporterBackendClient;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +48,10 @@ import org.springframework.core.env.Environment;
 @ExtendWith(MockitoExtension.class)
 class DwcaServiceTest {
 
+  private final Configuration configuration = new Configuration(Configuration.VERSION_2_3_32);
+
   private DwcaService service;
+  private Template template;
   @Mock
   private ElasticSearchRepository elasticSearchRepository;
   @Mock
@@ -53,6 +61,8 @@ class DwcaServiceTest {
   @Mock
   private IndexProperties indexProperties;
   @Mock
+  private S3Properties s3Properties;
+  @Mock
   private Environment environment;
   @Mock
   private SourceSystemRepository sourceSystemRepository;
@@ -60,16 +70,45 @@ class DwcaServiceTest {
   private DwcaZipWriter dwcaZipWriter;
 
   @BeforeEach
-  void setup() {
+  void setup() throws IOException {
+    configuration.setDirectoryForTemplateLoading(new File("src/main/resources/templates/"));
+    template = configuration.getTemplate("eml.ftl");
     service = new DwcaService(elasticSearchRepository, exporterBackendClient, s3Repository,
-        indexProperties, MAPPER, environment, sourceSystemRepository, dwcaZipWriter);
+        indexProperties, MAPPER, environment, sourceSystemRepository, dwcaZipWriter, template,
+        s3Properties);
   }
 
   @Test
   void testProcessRecords()
       throws IOException, S3UploadException, FailedProcessingException, TemplateException {
     // Given
-    var eml = "<eml></dataset><dataset><title>Test Dataset</title></dataset></eml>";
+    given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
+        List.of(givenSpecimenJson(), givenSpecimenJson(SECOND_SOURCE_SYSTEM_ID)));
+    given(elasticSearchRepository.getTargetMediaById(List.of("https://doi.org/TEST/Y9H-N1L-J7G",
+        "https://doi.org/TEST/WVW-SCM-C9Z", "https://doi.org/TEST/Y9H-N1L-J7G",
+        "https://doi.org/TEST/WVW-SCM-C9Z"))).willReturn(List.of(givenMediaJson()));
+    given(environment.getActiveProfiles()).willReturn(new String[]{"dwca"});
+    given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
+    given(s3Repository.uploadResults(any(), eq(JOB_ID), eq(".zip"))).willReturn(DOWNLOAD_LINK);
+    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(EML);
+    given(sourceSystemRepository.getEmlBySourceSystemId(SECOND_SOURCE_SYSTEM_ID)).willReturn(EML);
+    given(dwcaZipWriter.getFileSystem()).willReturn(
+        FileSystems.newFileSystem(new File(TEMP_FILE_NAME).toPath(), Map.of("create", "true")));
+
+    // When
+    service.handleMessage(givenJobRequest(false));
+
+    // Then
+    then(dwcaZipWriter).should().writeRecords(anyMap());
+    then(elasticSearchRepository).should().shutdown();
+    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(dwcaZipWriter).should().close();
+  }
+
+  @Test
+  void testProcessRecordsSourceSystem()
+      throws IOException, S3UploadException, FailedProcessingException, TemplateException {
+    // Given
     given(elasticSearchRepository.getTargetObjects(any(), any(), eq(null), any())).willReturn(
         List.of(givenSpecimenJson()));
     given(elasticSearchRepository.getTargetMediaById(List.of("https://doi.org/TEST/Y9H-N1L-J7G",
@@ -77,9 +116,10 @@ class DwcaServiceTest {
     given(environment.getActiveProfiles()).willReturn(new String[]{"dwca"});
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
     given(s3Repository.uploadResults(any(), eq(JOB_ID), eq(".zip"))).willReturn(DOWNLOAD_LINK);
-    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(eml);
+    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(EML);
     given(dwcaZipWriter.getFileSystem()).willReturn(
         FileSystems.newFileSystem(new File(TEMP_FILE_NAME).toPath(), Map.of("create", "true")));
+
     // When
     service.handleMessage(givenSourceSystemRequest());
 
@@ -100,6 +140,9 @@ class DwcaServiceTest {
     given(environment.getActiveProfiles()).willReturn(new String[]{"dwca"});
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
     given(s3Repository.uploadResults(any(), eq(JOB_ID), eq(".zip"))).willReturn(DOWNLOAD_LINK);
+    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(EML);
+    given(dwcaZipWriter.getFileSystem()).willReturn(
+        FileSystems.newFileSystem(new File(TEMP_FILE_NAME).toPath(), Map.of("create", "true")));
 
     // When
     service.handleMessage(givenJobRequest());
@@ -120,6 +163,9 @@ class DwcaServiceTest {
     given(elasticSearchRepository.getTargetMediaById(List.of())).willReturn(List.of());
     willThrow(new TemplateException(mock(freemarker.core.Environment.class))).given(dwcaZipWriter)
         .close();
+    given(sourceSystemRepository.getEmlBySourceSystemId(SOURCE_SYSTEM_ID)).willReturn(EML);
+    given(dwcaZipWriter.getFileSystem()).willReturn(
+        FileSystems.newFileSystem(new File(TEMP_FILE_NAME).toPath(), Map.of("create", "true")));
 
     // When
     service.handleMessage(givenJobRequest());

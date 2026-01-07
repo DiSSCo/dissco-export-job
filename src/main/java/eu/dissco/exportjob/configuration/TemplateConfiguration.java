@@ -26,6 +26,11 @@ public class TemplateConfiguration {
     return configuration.getTemplate("data-package.ftl");
   }
 
+  @Bean(name = "emlTemplate")
+  public Template emlTemplate() throws IOException {
+    return configuration.getTemplate("eml.ftl");
+  }
+
   @Bean(name = "metaTemplate")
   public Template metaTemplate() throws IOException {
     TemplateLoader tl = new ClassTemplateLoader(MetaDescriptorWriter.class, "/templates");
