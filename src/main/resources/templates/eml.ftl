@@ -19,7 +19,7 @@
     </metadataProvider>
     <pubDate>${publication_date}</pubDate>
     <language>ENGLISH</language>
-    <abstract>A dataset containing data from potentially multiple dataset provided by multiple institutions. In total ${number_of_source_systems?c} different source systems provided data</abstract>
+    <abstract>A export containing data from potentially multiple datasets provided by multiple institutions. In total ${number_of_source_systems?c} different source systems provided data</abstract>
     <contact>
       <individualName>
         <surName>DiSSCo Export Job Service</surName>

@@ -31,7 +31,7 @@ public class TestUtils {
   public static final String SOURCE_SYSTEM_ID = "https://hdl.handle.net/TEST/Z1M-8WG-DCD";
   public static final String SECOND_SOURCE_SYSTEM_ID = "https://hdl.handle.net/TEST/XXX-AAA-EEE";
   public static final String TEMP_FILE_NAME = "src/test/resources/tmp.zip";
-  public static final String EML = "<eml></dataset><dataset><title>Test Dataset</title></dataset></eml>";
+  public static final String EML = "<eml><dataset><title>Test Dataset</title></dataset></eml>";
 
 
   public static JobRequest givenJobRequest() {

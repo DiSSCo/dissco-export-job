@@ -94,6 +94,7 @@ class DwcaServiceTest {
     given(sourceSystemRepository.getEmlBySourceSystemId(SECOND_SOURCE_SYSTEM_ID)).willReturn(EML);
     given(dwcaZipWriter.getFileSystem()).willReturn(
         FileSystems.newFileSystem(new File(TEMP_FILE_NAME).toPath(), Map.of("create", "true")));
+    given(s3Properties.getBucketName()).willReturn("test-bucket");
 
     // When
     service.handleMessage(givenJobRequest(false));

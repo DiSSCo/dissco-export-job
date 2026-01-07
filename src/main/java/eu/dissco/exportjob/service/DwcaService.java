@@ -28,6 +28,7 @@ import eu.dissco.exportjob.schema.EntityRelationship;
 import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.TaxonIdentification;
+import eu.dissco.exportjob.utils.ExportUtils;
 import eu.dissco.exportjob.web.ExporterBackendClient;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -70,6 +71,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile(Profiles.DWCA)
 public class DwcaService extends AbstractExportJobService {
+
   public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
       "yyyy-MM-dd").withZone(ZoneOffset.UTC);
   public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(
@@ -96,7 +98,6 @@ public class DwcaService extends AbstractExportJobService {
   private static final String UNIT_GUID = "abcd:unitGUID";
   private static final String UNIT_ID = "abcd:unitID";
 
-
   private final ObjectMapper objectMapper;
   private final DwcaZipWriter dwcaZipWriter;
   @Qualifier(value = "emlTemplate")
@@ -115,13 +116,6 @@ public class DwcaService extends AbstractExportJobService {
     this.dwcaZipWriter = dwcaZipWriter;
     this.emlTemplate = emlTemplate;
     this.s3Properties = s3Properties;
-  }
-
-  private static String getStringValue(Object object) {
-    if (object == null) {
-      return null;
-    }
-    return String.valueOf(object);
   }
 
   @Override
@@ -162,12 +156,13 @@ public class DwcaService extends AbstractExportJobService {
     var date = DATE_FORMATTER.format(now);
     var templateMap = new HashMap<String, Object>();
     templateMap.put("job_id", jobRequest.jobId());
-    templateMap.put("publication_date",date);
+    templateMap.put("publication_date", date);
     templateMap.put("publication_date_time", DATE_TIME_FORMATTER.format(now));
     templateMap.put("number_of_source_systems", sourceSystemList.size());
     templateMap.put("package_id", UUID.randomUUID().toString());
-    templateMap.put("export_download_link", String.format("https://%s.s3.eu-west-2.amazonaws.com/%s/%s.zip",
-        s3Properties.getBucketName(), date, jobRequest.jobId()));
+    templateMap.put("export_download_link",
+        String.format("https://%s.s3.eu-west-2.amazonaws.com/%s/%s.zip",
+            s3Properties.getBucketName(), date, jobRequest.jobId()));
     var writer = new StringWriter();
     try {
       emlTemplate.process(templateMap, writer);
@@ -256,7 +251,7 @@ public class DwcaService extends AbstractExportJobService {
         chronometricAgeRecord.add(Pair.of(ChronoTerm.latestChronometricAgeReferenceSystem,
             chronometricAge.getChronoLatestChronometricAgeReferenceSystem()));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeUncertaintyInYears,
-            getStringValue(chronometricAge.getChronoChronometricAgeUncertaintyInYears())));
+            convertValueToString(chronometricAge.getChronoChronometricAgeUncertaintyInYears())));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeUncertaintyMethod,
             chronometricAge.getChronoChronometricAgeUncertaintyMethod()));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.materialDated,
@@ -539,14 +534,14 @@ public class DwcaService extends AbstractExportJobService {
     mediaRecord.add(
         Pair.of(AcTerm.resourceCreationTechnique, media.getAcResourceCreationTechnique()));
     mediaRecord.add(Pair.of(AcTerm.accessURI, media.getAcAccessURI()));
-    mediaRecord.add(Pair.of(AcTerm.frameRate, getStringValue(media.getAcFrameRate())));
+    mediaRecord.add(Pair.of(AcTerm.frameRate, convertValueToString(media.getAcFrameRate())));
     mediaRecord.add(Pair.of(AcTerm.variantLiteral, media.getAcVariantLiteral()));
     mediaRecord.add(Pair.of(AcTerm.variant, media.getAcVariant()));
     mediaRecord.add(Pair.of(AcTerm.variantDescription, media.getAcVariantDescription()));
     mediaRecord.add(
-        Pair.of(ExifTerm.PixelXDimension, getStringValue(media.getExifPixelXDimension())));
+        Pair.of(ExifTerm.PixelXDimension, convertValueToString(media.getExifPixelXDimension())));
     mediaRecord.add(
-        Pair.of(ExifTerm.PixelYDimension, getStringValue(media.getExifPixelYDimension())));
+        Pair.of(ExifTerm.PixelYDimension, convertValueToString(media.getExifPixelYDimension())));
     return mediaRecord;
   }
 
@@ -725,7 +720,7 @@ public class DwcaService extends AbstractExportJobService {
     identificationRecord.add(Pair.of(DwcTerm.dateIdentified,
         identification.getDwcDateIdentified()));
     identificationRecord.add(Pair.of(DwcTerm.identificationVerificationStatus,
-        getStringValue(identification.getOdsIsVerifiedIdentification())));
+        convertValueToString(identification.getOdsIsVerifiedIdentification())));
     identificationRecord.add(Pair.of(DwcTerm.identificationRemarks,
         identification.getDwcIdentificationRemarks()));
     identificationRecord.add(Pair.of(DwcTerm.taxonID, taxonIdentification.getDwcTaxonID()));
