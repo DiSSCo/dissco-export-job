@@ -1,5 +1,7 @@
 package eu.dissco.exportjob.service;
 
+import static eu.dissco.exportjob.utils.ExportUtils.removeProxy;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.domain.JobRequest;
@@ -100,6 +102,17 @@ public abstract class AbstractExportJobService {
     log.info("Retrieving EML for source system ID: {}", sourceSystemId);
     var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
     var sourceSystemFile = fs.getPath("eml.xml");
+    Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
+    return eml;
+  }
+
+  protected String writeEmlFileForSourceSystem(String sourceSystemId, FileSystem fs)
+      throws FailedProcessingException, IOException {
+    log.info("Retrieving EML for source system ID: {}", sourceSystemId);
+    var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
+    Files.createDirectories(fs.getPath("dataset"));
+    var sourceSystemFile = fs.getPath("dataset",
+        removeProxy(sourceSystemId).replace('/', '-').toLowerCase() + ".xml");
     Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
     return eml;
   }

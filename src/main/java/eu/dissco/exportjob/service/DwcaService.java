@@ -15,6 +15,7 @@ import eu.dissco.exportjob.component.DwcaZipWriter;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.IndexProperties;
+import eu.dissco.exportjob.properties.S3Properties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
@@ -27,13 +28,24 @@ import eu.dissco.exportjob.schema.EntityRelationship;
 import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.TaxonIdentification;
+import eu.dissco.exportjob.utils.ExportUtils;
 import eu.dissco.exportjob.web.ExporterBackendClient;
+import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -50,6 +62,7 @@ import org.gbif.dwc.terms.ObisTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.terms.XmpRightsTerm;
 import org.gbif.dwc.terms.XmpTerm;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -58,6 +71,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile(Profiles.DWCA)
 public class DwcaService extends AbstractExportJobService {
+
+  public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd").withZone(ZoneOffset.UTC);
+  public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(
+      "yyyy-MM-dd'T'HH:mm:ss.SSSXXX").withZone(ZoneOffset.UTC);
 
   public static final Pair<Predicate<DigitalSpecimen>, Function<DigitalSpecimen, Object>> EVENT_FUNCTIONS =
       Pair.of(ds -> ds.getOdsHasEvents() == null || ds.getOdsHasEvents().isEmpty(),
@@ -80,26 +98,24 @@ public class DwcaService extends AbstractExportJobService {
   private static final String UNIT_GUID = "abcd:unitGUID";
   private static final String UNIT_ID = "abcd:unitID";
 
-
   private final ObjectMapper objectMapper;
   private final DwcaZipWriter dwcaZipWriter;
+  @Qualifier(value = "emlTemplate")
+  private final Template emlTemplate;
+  private final Set<String> sourceSystemList = new HashSet<>();
+  private final S3Properties s3Properties;
 
   public DwcaService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
       S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
       Environment environment, SourceSystemRepository sourceSystemRepository,
-      DwcaZipWriter dwcaZipWriter) {
+      DwcaZipWriter dwcaZipWriter, Template emlTemplate, S3Properties s3Properties) {
     super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
         environment, sourceSystemRepository);
     this.objectMapper = objectMapper;
     this.dwcaZipWriter = dwcaZipWriter;
-  }
-
-  private static String getStringValue(Object object) {
-    if (object == null) {
-      return null;
-    }
-    return String.valueOf(object);
+    this.emlTemplate = emlTemplate;
+    this.s3Properties = s3Properties;
   }
 
   @Override
@@ -112,12 +128,48 @@ public class DwcaService extends AbstractExportJobService {
       throws IOException, FailedProcessingException {
     if (Boolean.TRUE.equals(jobRequest.isSourceSystemJob())) {
       writeEmlFile(jobRequest, dwcaZipWriter.getFileSystem());
+    } else {
+      writeDiSSCoEml(jobRequest);
+      for (String sourceSystemId : sourceSystemList) {
+        writeEmlFileForSourceSystem(sourceSystemId, dwcaZipWriter.getFileSystem());
+      }
     }
     try {
       dwcaZipWriter.close();
     } catch (TemplateException e) {
       throw new FailedProcessingException("Failed to create the metadata file", e);
     }
+  }
+
+  private void writeDiSSCoEml(JobRequest jobRequest) throws FailedProcessingException {
+    var eml = generateEmlFile(jobRequest);
+    var sourceSystemFile = dwcaZipWriter.getFileSystem().getPath("eml.xml");
+    try {
+      Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new FailedProcessingException("Failed to write DiSSCo EML to zip file", e);
+    }
+  }
+
+  private String generateEmlFile(JobRequest jobRequest) throws FailedProcessingException {
+    var now = Instant.now();
+    var date = DATE_FORMATTER.format(now);
+    var templateMap = new HashMap<String, Object>();
+    templateMap.put("job_id", jobRequest.jobId());
+    templateMap.put("publication_date", date);
+    templateMap.put("publication_date_time", DATE_TIME_FORMATTER.format(now));
+    templateMap.put("number_of_source_systems", sourceSystemList.size());
+    templateMap.put("package_id", UUID.randomUUID().toString());
+    templateMap.put("export_download_link",
+        String.format("https://%s.s3.eu-west-2.amazonaws.com/%s/%s.zip",
+            s3Properties.getBucketName(), date, jobRequest.jobId()));
+    var writer = new StringWriter();
+    try {
+      emlTemplate.process(templateMap, writer);
+    } catch (TemplateException | IOException e) {
+      throw new FailedProcessingException("Failed to generate the DiSSCo EML file", e);
+    }
+    return writer.toString();
   }
 
   @Override
@@ -128,6 +180,8 @@ public class DwcaService extends AbstractExportJobService {
     var digitalMediaList = elasticSearchRepository.getTargetMediaById(
             getMediaIds(digitalSpecimenList)).stream()
         .map(json -> objectMapper.convertValue(json, DigitalMedia.class)).toList();
+    digitalSpecimenList.stream().map(DigitalSpecimen::getOdsSourceSystemID).distinct().forEach(
+        sourceSystemList::add);
     var specimenToDigitalMediaMapping = createSpecimenToMediaMapping(digitalSpecimenList,
         digitalMediaList);
     var mappedResult = mapToDwcaRecords(digitalSpecimenList, specimenToDigitalMediaMapping);
@@ -197,7 +251,7 @@ public class DwcaService extends AbstractExportJobService {
         chronometricAgeRecord.add(Pair.of(ChronoTerm.latestChronometricAgeReferenceSystem,
             chronometricAge.getChronoLatestChronometricAgeReferenceSystem()));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeUncertaintyInYears,
-            getStringValue(chronometricAge.getChronoChronometricAgeUncertaintyInYears())));
+            convertValueToString(chronometricAge.getChronoChronometricAgeUncertaintyInYears())));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeUncertaintyMethod,
             chronometricAge.getChronoChronometricAgeUncertaintyMethod()));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.materialDated,
@@ -206,7 +260,8 @@ public class DwcaService extends AbstractExportJobService {
             chronometricAge.getChronoMaterialDatedID()));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.materialDatedRelationship,
             chronometricAge.getChronoMaterialDatedRelationship()));
-        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeDeterminedBy, retrieveCombinedAgentName(chronometricAge.getOdsHasAgents(), null)));
+        chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeDeterminedBy,
+            retrieveCombinedAgentName(chronometricAge.getOdsHasAgents(), null)));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeDeterminedDate,
             chronometricAge.getChronoChronometricAgeDeterminedDate()));
         chronometricAgeRecord.add(Pair.of(ChronoTerm.chronometricAgeReferences,
@@ -479,14 +534,14 @@ public class DwcaService extends AbstractExportJobService {
     mediaRecord.add(
         Pair.of(AcTerm.resourceCreationTechnique, media.getAcResourceCreationTechnique()));
     mediaRecord.add(Pair.of(AcTerm.accessURI, media.getAcAccessURI()));
-    mediaRecord.add(Pair.of(AcTerm.frameRate, getStringValue(media.getAcFrameRate())));
+    mediaRecord.add(Pair.of(AcTerm.frameRate, convertValueToString(media.getAcFrameRate())));
     mediaRecord.add(Pair.of(AcTerm.variantLiteral, media.getAcVariantLiteral()));
     mediaRecord.add(Pair.of(AcTerm.variant, media.getAcVariant()));
     mediaRecord.add(Pair.of(AcTerm.variantDescription, media.getAcVariantDescription()));
     mediaRecord.add(
-        Pair.of(ExifTerm.PixelXDimension, getStringValue(media.getExifPixelXDimension())));
+        Pair.of(ExifTerm.PixelXDimension, convertValueToString(media.getExifPixelXDimension())));
     mediaRecord.add(
-        Pair.of(ExifTerm.PixelYDimension, getStringValue(media.getExifPixelYDimension())));
+        Pair.of(ExifTerm.PixelYDimension, convertValueToString(media.getExifPixelYDimension())));
     return mediaRecord;
   }
 
@@ -665,7 +720,7 @@ public class DwcaService extends AbstractExportJobService {
     identificationRecord.add(Pair.of(DwcTerm.dateIdentified,
         identification.getDwcDateIdentified()));
     identificationRecord.add(Pair.of(DwcTerm.identificationVerificationStatus,
-        getStringValue(identification.getOdsIsVerifiedIdentification())));
+        convertValueToString(identification.getOdsIsVerifiedIdentification())));
     identificationRecord.add(Pair.of(DwcTerm.identificationRemarks,
         identification.getDwcIdentificationRemarks()));
     identificationRecord.add(Pair.of(DwcTerm.taxonID, taxonIdentification.getDwcTaxonID()));

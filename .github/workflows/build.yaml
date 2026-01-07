@@ -14,8 +14,9 @@ jobs:
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up JDK 21
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
+          distribution: 'temurin'
           java-version: 21
       - name: Cache SonarCloud packages
         uses: actions/cache@v4
@@ -37,6 +38,13 @@ jobs:
                   -Dsonar.projectKey=DiSSCo_${{ github.event.repository.name }}
                   -Dsonar.exclusions=**/jooq/**
                   -Dsonar.coverage.exclusions=**/properties/**,**/configuration/**,**/domain/**,**/exception/**,**/maven/**
+      - name: Login to Public ECR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       - name: Build image
         run: |
           docker build -t ${{ github.event.repository.name }} .
@@ -48,11 +56,11 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
         env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_SKIP_DB_UPDATE: false
+          TRIVY_SKIP_JAVA_DB_UPDATE: false
       - name: Trivy - Stop on Severe Vulnerabilities
-        if: github.event_name == 'pull_request'
         uses: aquasecurity/trivy-action@master
+        if: github.event_name == 'pull_request'
         with:
           image-ref: '${{ github.event.repository.name }}'
           format: 'table'
@@ -62,15 +70,8 @@ jobs:
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
         env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-      - name: Login to Public ECR
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v1
-        with:
-          registry: public.ecr.aws
-          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TRIVY_SKIP_DB_UPDATE: false
+          TRIVY_SKIP_JAVA_DB_UPDATE: false
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
