@@ -72,7 +72,7 @@ class DwcaServiceTest {
   @BeforeEach
   void setup() throws IOException {
     configuration.setDirectoryForTemplateLoading(new File("src/main/resources/templates/"));
-    template = configuration.getTemplate("eml.ftl");
+    template = configuration.getTemplate("dissco-eml.ftl");
     service = new DwcaService(elasticSearchRepository, exporterBackendClient, s3Repository,
         indexProperties, MAPPER, environment, sourceSystemRepository, dwcaZipWriter, template,
         s3Properties);

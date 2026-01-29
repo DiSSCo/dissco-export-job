@@ -28,7 +28,7 @@ public class TemplateConfiguration {
 
   @Bean(name = "emlTemplate")
   public Template emlTemplate() throws IOException {
-    return configuration.getTemplate("eml.ftl");
+    return configuration.getTemplate("dissco-eml.ftl");
   }
 
   @Bean(name = "metaTemplate")
