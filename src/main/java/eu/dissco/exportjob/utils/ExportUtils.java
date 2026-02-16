@@ -18,6 +18,8 @@ import org.apache.commons.lang3.tuple.Pair;
 
 public class ExportUtils {
 
+  private static final String HANDLE_PROXY = "https://hdl.handle.net/";
+
   public static final Set<String> EXCLUDE_IDENTIFIERS = Set.of("dwc:catalogNumber", "dwca:ID",
       "dwc:recordNumber", "dwc:occurrenceID", "abcd:recordURI", "abcd:unitID", "abcd:unitGUID");
   public static final Set<String> EXCLUDE_RELATIONSHIPS = Set.of("hasDigitalMedia",
@@ -26,6 +28,10 @@ public class ExportUtils {
 
   private ExportUtils() {
     // Utility class
+  }
+
+  public static String removeProxy(String id) {
+    return id.replace(HANDLE_PROXY, "");
   }
 
   public static String parseAgentDate(OdsHasRole odsHasRole) {

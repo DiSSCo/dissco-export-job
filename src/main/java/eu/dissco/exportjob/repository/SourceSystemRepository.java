@@ -1,6 +1,7 @@
 package eu.dissco.exportjob.repository;
 
 import static eu.dissco.exportjob.database.jooq.Tables.SOURCE_SYSTEM;
+import static eu.dissco.exportjob.utils.ExportUtils.removeProxy;
 
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import java.nio.charset.StandardCharsets;
@@ -12,17 +13,11 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class SourceSystemRepository {
 
-  private static final String HANDLE_PROXY = "https://hdl.handle.net/";
-
   private final DSLContext context;
 
-  private static String removeProxy(String id) {
-    return id.replace(HANDLE_PROXY, "");
-  }
-
-
   public String getEmlBySourceSystemId(String sourceSystemId) throws FailedProcessingException {
-    var emlBytes = context.select(SOURCE_SYSTEM.EML).from(SOURCE_SYSTEM)
+    var emlBytes = context.select(SOURCE_SYSTEM.EML)
+        .from(SOURCE_SYSTEM)
         .where(SOURCE_SYSTEM.ID.eq(removeProxy(sourceSystemId)))
         .fetchOne(SOURCE_SYSTEM.EML);
     if (emlBytes != null) {
