@@ -34,6 +34,7 @@ class DwcaZipWriterTest {
 
   @BeforeEach
   void setup() throws IOException {
+    removeTempFile();
     var freemarker = new TemplateConfiguration(mock(Configuration.class)).metaTemplate();
     var indexProperties = mock(IndexProperties.class);
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
@@ -42,6 +43,10 @@ class DwcaZipWriterTest {
 
   @AfterEach
   void tearDown() throws IOException {
+    removeTempFile();
+  }
+
+  private static void removeTempFile() throws IOException {
     var file = new File(TEMP_FILE_NAME);
     Files.deleteIfExists(file.toPath());
   }
