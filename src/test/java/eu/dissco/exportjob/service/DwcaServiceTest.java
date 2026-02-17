@@ -13,6 +13,7 @@ import static eu.dissco.exportjob.utils.TestUtils.givenMediaJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenMinimalSpecimenJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenSourceSystemRequest;
 import static eu.dissco.exportjob.utils.TestUtils.givenSpecimenJson;
+import static eu.dissco.exportjob.utils.TestUtils.removeTempFile;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -71,11 +73,17 @@ class DwcaServiceTest {
 
   @BeforeEach
   void setup() throws IOException {
+    removeTempFile();
     configuration.setDirectoryForTemplateLoading(new File("src/main/resources/templates/"));
     template = configuration.getTemplate("dissco-eml.ftl");
     service = new DwcaService(elasticSearchRepository, exporterBackendClient, s3Repository,
         indexProperties, MAPPER, environment, sourceSystemRepository, dwcaZipWriter, template,
         s3Properties);
+  }
+
+  @AfterEach
+  void terminate() throws IOException {
+    removeTempFile();
   }
 
   @Test

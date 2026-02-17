@@ -1,6 +1,7 @@
 package eu.dissco.exportjob.component;
 
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
+import static eu.dissco.exportjob.utils.TestUtils.removeTempFile;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -34,6 +35,7 @@ class DwcaZipWriterTest {
 
   @BeforeEach
   void setup() throws IOException {
+    removeTempFile();
     var freemarker = new TemplateConfiguration(mock(Configuration.class)).metaTemplate();
     var indexProperties = mock(IndexProperties.class);
     given(indexProperties.getTempFileLocation()).willReturn(TEMP_FILE_NAME);
@@ -42,9 +44,9 @@ class DwcaZipWriterTest {
 
   @AfterEach
   void tearDown() throws IOException {
-    var file = new File(TEMP_FILE_NAME);
-    Files.deleteIfExists(file.toPath());
+    removeTempFile();
   }
+
 
   @Test
   void testWrite() throws IOException, TemplateException {
