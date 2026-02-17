@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +36,10 @@ public class TestUtils {
   public static final String TEMP_FILE_NAME = "src/test/resources/tmp.zip";
   public static final String EML = "<eml><dataset><title>Test Dataset</title></dataset></eml>";
 
+  public static void removeTempFile() throws IOException {
+    var file = new File(TEMP_FILE_NAME);
+    Files.deleteIfExists(file.toPath());
+  }
 
   public static JobRequest givenJobRequest() {
     return givenJobRequest(Boolean.FALSE);

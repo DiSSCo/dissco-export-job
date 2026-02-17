@@ -1,6 +1,7 @@
 package eu.dissco.exportjob.component;
 
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
+import static eu.dissco.exportjob.utils.TestUtils.removeTempFile;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -46,10 +47,6 @@ class DwcaZipWriterTest {
     removeTempFile();
   }
 
-  private static void removeTempFile() throws IOException {
-    var file = new File(TEMP_FILE_NAME);
-    Files.deleteIfExists(file.toPath());
-  }
 
   @Test
   void testWrite() throws IOException, TemplateException {
