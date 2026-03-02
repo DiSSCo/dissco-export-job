@@ -1,3 +1,11 @@
 # Jul 1 2025
 # Issue with GBIF library, is not used in the project.
 CVE-2025-52999
+
+# Mar 2 2027
+# Issue with Jackson library, needs to be fixed in a spring boot dep update
+GHSA-72hv-8253-57qq
+
+# Mar 2 2027
+# Issue with the underlying Docker image, needs to be fixed in libpng and then the Temurin 25 Alpine image
+CVE-2026-25646
