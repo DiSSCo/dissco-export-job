@@ -3,7 +3,9 @@ package eu.dissco.exportjob.service;
 import static eu.dissco.exportjob.Profiles.DOI_LIST;
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
+import static eu.dissco.exportjob.utils.TestUtils.JSON_MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
+import static eu.dissco.exportjob.utils.TestUtils.createMarkAsCompleteBody;
 import static eu.dissco.exportjob.utils.TestUtils.givenDigitalSpecimen;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,11 +13,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,7 +48,8 @@ class DoiListServiceTest {
 
   @BeforeEach
   void init() {
-    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository, indexProperties, environment, sourceSystemRepository);
+    service = new DoiListService(elasticSearchRepository, exporterBackendClient, s3Repository,
+        indexProperties, environment, sourceSystemRepository, JSON_MAPPER);
   }
 
   @Test
@@ -63,7 +66,7 @@ class DoiListServiceTest {
     then(elasticSearchRepository).should().shutdown();
     then(elasticSearchRepository).shouldHaveNoMoreInteractions();
     then(s3Repository).shouldHaveNoInteractions();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, null);
+    then(exporterBackendClient).should().markJobAsComplete(createMarkAsCompleteBody(JOB_ID, null));
   }
 
   @Test
@@ -80,7 +83,8 @@ class DoiListServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(exporterBackendClient).should()
+        .markJobAsComplete(createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
   }
 
 }

@@ -1,12 +1,12 @@
 package eu.dissco.exportjob.component;
 
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.JobProperties;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ public class JobRequestComponent {
     var searchParams = new ArrayList<SearchParam>();
     if (properties.getInputFields().size() != properties.getInputValues().size()) {
       log.error("Mismatch between input fields and input values for searching");
-      client.updateJobState(properties.getJobId(), JobStateEndpoint.FAILED);
+      client.updateJobState(properties.getJobId().toString(), JobStateEndpoint.FAILED.getEndpoint());
       throw new FailedProcessingException();
     }
     for (int i = 0; i < properties.getInputFields().size(); i++) {

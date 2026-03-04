@@ -2,8 +2,8 @@ package eu.dissco.exportjob.service;
 
 import static eu.dissco.exportjob.utils.ExportUtils.removeProxy;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
@@ -12,7 +12,6 @@ import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Service
 @Slf4j
@@ -39,6 +40,7 @@ public abstract class AbstractExportJobService {
   );
   protected final ElasticSearchRepository elasticSearchRepository;
   protected final IndexProperties indexProperties;
+  protected final JsonMapper mapper;
   private final ExporterBackendClient exporterBackendClient;
   private final S3Repository s3Repository;
   private final Environment environment;
@@ -46,23 +48,32 @@ public abstract class AbstractExportJobService {
 
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
     try {
-      exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.RUNNING);
+      exporterBackendClient.updateJobState(jobRequest.jobId().toString(),
+          JobStateEndpoint.RUNNING.getEndpoint());
       var uploadData = processRequest(jobRequest);
       if (uploadData) {
         postProcessResults(jobRequest);
         var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()),
             jobRequest.jobId(), extensionMap.get(environment.getActiveProfiles()[0]));
         log.info("S3 results available at {}", url);
-        exporterBackendClient.markJobAsComplete(jobRequest.jobId(), url);
+        markAsComplete(jobRequest, url);
       } else {
         log.warn("No results found for job {}", jobRequest.jobId());
-        exporterBackendClient.markJobAsComplete(jobRequest.jobId(), null);
+        markAsComplete(jobRequest, null);
       }
       log.info("Successfully completed job {}", jobRequest.jobId());
     } catch (IOException | S3UploadException | FailedProcessingException e) {
       log.error("An error has occurred", e);
-      exporterBackendClient.updateJobState(jobRequest.jobId(), JobStateEndpoint.FAILED);
+      exporterBackendClient.updateJobState(jobRequest.jobId().toString(),
+          JobStateEndpoint.FAILED.getEndpoint());
     }
+  }
+
+  private void markAsComplete(JobRequest jobRequest, String url) {
+    var body = mapper.createObjectNode()
+        .put("id", jobRequest.jobId().toString())
+        .put("downloadLink", url);
+    exporterBackendClient.markJobAsComplete(body);
   }
 
   protected boolean processRequest(JobRequest jobRequest)
@@ -80,7 +91,7 @@ public abstract class AbstractExportJobService {
         keepSearching = false;
       } else {
         processSearchResults(searchResult);
-        lastId = searchResult.getLast().get(ID_FIELD).asText();
+        lastId = searchResult.getLast().get(ID_FIELD).asString();
         resultsProcessed += searchResult.size();
       }
     }

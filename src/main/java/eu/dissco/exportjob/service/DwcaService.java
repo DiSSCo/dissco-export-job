@@ -8,9 +8,8 @@ import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentName;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveTerm;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.DwcaZipWriter;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
@@ -28,8 +27,6 @@ import eu.dissco.exportjob.schema.EntityRelationship;
 import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.TaxonIdentification;
-import eu.dissco.exportjob.utils.ExportUtils;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -66,6 +63,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
@@ -98,7 +97,6 @@ public class DwcaService extends AbstractExportJobService {
   private static final String UNIT_GUID = "abcd:unitGUID";
   private static final String UNIT_ID = "abcd:unitID";
 
-  private final ObjectMapper objectMapper;
   private final DwcaZipWriter dwcaZipWriter;
   @Qualifier(value = "emlTemplate")
   private final Template emlTemplate;
@@ -107,12 +105,12 @@ public class DwcaService extends AbstractExportJobService {
 
   public DwcaService(
       ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
-      S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
-      Environment environment, SourceSystemRepository sourceSystemRepository,
-      DwcaZipWriter dwcaZipWriter, Template emlTemplate, S3Properties s3Properties) {
-    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
+      S3Repository s3Repository, IndexProperties indexProperties, Environment environment,
+      SourceSystemRepository sourceSystemRepository,
+      DwcaZipWriter dwcaZipWriter, Template emlTemplate, S3Properties s3Properties,
+      JsonMapper mapper) {
+    super(elasticSearchRepository, indexProperties, mapper, exporterBackendClient, s3Repository,
         environment, sourceSystemRepository);
-    this.objectMapper = objectMapper;
     this.dwcaZipWriter = dwcaZipWriter;
     this.emlTemplate = emlTemplate;
     this.s3Properties = s3Properties;
@@ -176,10 +174,10 @@ public class DwcaService extends AbstractExportJobService {
   protected void processSearchResults(List<JsonNode> searchResults)
       throws IOException, FailedProcessingException {
     var digitalSpecimenList = searchResults.stream()
-        .map(json -> objectMapper.convertValue(json, DigitalSpecimen.class)).toList();
+        .map(json -> mapper.convertValue(json, DigitalSpecimen.class)).toList();
     var digitalMediaList = elasticSearchRepository.getTargetMediaById(
             getMediaIds(digitalSpecimenList)).stream()
-        .map(json -> objectMapper.convertValue(json, DigitalMedia.class)).toList();
+        .map(json -> mapper.convertValue(json, DigitalMedia.class)).toList();
     digitalSpecimenList.stream().map(DigitalSpecimen::getOdsSourceSystemID).distinct().forEach(
         sourceSystemList::add);
     var specimenToDigitalMediaMapping = createSpecimenToMediaMapping(digitalSpecimenList,

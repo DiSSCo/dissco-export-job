@@ -8,13 +8,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.BDDMockito.then;
 
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.JobProperties;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,7 +59,7 @@ class JobRequestComponentTest {
   }
 
   @Test
-  void testHandleMessageInvalidParams() throws FailedProcessingException {
+  void testHandleMessageInvalidParams() {
     // Given
     properties.setInputFields(List.of(ORG_FIELD_NAME));
     properties.setJobId(JOB_ID);
@@ -70,7 +70,7 @@ class JobRequestComponentTest {
     assertThrows(FailedProcessingException.class, () -> jobRequestComponent.getJobRequest());
 
     // Then
-    then(client).should().updateJobState(JOB_ID, JobStateEndpoint.FAILED);
+    then(client).should().updateJobState(JOB_ID.toString(), JobStateEndpoint.FAILED.getEndpoint());
   }
 
 }

@@ -1,16 +1,25 @@
 package eu.dissco.exportjob.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static eu.dissco.exportjob.configuration.ApplicationConfiguration.DATE_STRING;
+
+import com.fasterxml.jackson.annotation.JsonSetter.Value;
+import com.fasterxml.jackson.annotation.Nulls;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.SimpleDateFormat;
+import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public class TestUtils {
 
@@ -24,7 +33,7 @@ public class TestUtils {
   public static final String PHYS_ID_1 = "AVES.XYZ";
   public static final String PHYS_ID_2 = "AVES.QRS";
   public static final UUID JOB_ID = UUID.fromString("cd5c9ee7-23b1-4615-993e-9d56d0720213");
-  public static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
+  public static final ObjectMapper MAPPER = new ObjectMapper();
   public static final String DOWNLOAD_LINK = "https://aws.download/s3";
   public static final String ORG_FIELD_NAME = "$['ods:organisationID']";
   public static final String ID_FIELD = "dcterms:identifier";
@@ -33,6 +42,17 @@ public class TestUtils {
   public static final String SECOND_SOURCE_SYSTEM_ID = "https://hdl.handle.net/TEST/XXX-AAA-EEE";
   public static final String TEMP_FILE_NAME = "src/test/resources/tmp.zip";
   public static final String EML = "<eml><dataset><title>Test Dataset</title></dataset></eml>";
+  public static final JsonMapper JSON_MAPPER = JsonMapper.builder()
+      .findAndAddModules()
+      .defaultDateFormat(new SimpleDateFormat(DATE_STRING))
+      .defaultTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC))
+      .withConfigOverride(List.class, cfg ->
+          cfg.setNullHandling(Value.forValueNulls(Nulls.AS_EMPTY)))
+      .withConfigOverride(Map.class, cfg ->
+          cfg.setNullHandling(Value.forValueNulls(Nulls.AS_EMPTY)))
+      .withConfigOverride(Set.class, cfg ->
+          cfg.setNullHandling(Value.forValueNulls(Nulls.AS_EMPTY)))
+      .build();
 
   public static void removeTempFile() throws IOException {
     var file = new File(TEMP_FILE_NAME);
@@ -70,7 +90,7 @@ public class TestUtils {
   }
 
   public static JsonNode givenDigitalSpecimen(String doi, String org, String physId) {
-    return MAPPER.createObjectNode()
+    return JSON_MAPPER.createObjectNode()
         .put(ID_FIELD, doi)
         .put("@id", doi)
         .put("ods:organisationID", org)
@@ -82,7 +102,7 @@ public class TestUtils {
   }
 
   public static JsonNode givenDigitalSpecimenReducedDoiList(String doi, String physId) {
-    return MAPPER.createObjectNode()
+    return JSON_MAPPER.createObjectNode()
         .put(ID_FIELD, doi)
         .put(PHYS_ID_FIELD, physId);
   }
@@ -92,12 +112,18 @@ public class TestUtils {
   }
 
 
-  public static JsonNode givenSpecimenJson() throws JsonProcessingException {
+  public static JsonNode givenSpecimenJson() {
     return givenSpecimenJson(SOURCE_SYSTEM_ID);
   }
 
-  public static JsonNode givenSpecimenJson(String sourceSystemId) throws JsonProcessingException {
-    return MAPPER.readTree(
+  public static JsonNode createMarkAsCompleteBody(UUID jobId, String url) {
+    return JSON_MAPPER.createObjectNode()
+        .put("id", jobId.toString())
+        .put("downloadLink", url);
+  }
+
+  public static JsonNode givenSpecimenJson(String sourceSystemId) {
+    return JSON_MAPPER.readTree(
         """
             {
               "@id": "https://doi.org/TEST/W4K-QC6-5H5",
@@ -693,8 +719,8 @@ public class TestUtils {
     );
   }
 
-  public static JsonNode givenMinimalSpecimenJson() throws JsonProcessingException {
-    return MAPPER.readTree(
+  public static JsonNode givenMinimalSpecimenJson() {
+    return JSON_MAPPER.readTree(
         """
             {
               "@id": "https://doi.org/TEST/W4K-QC6-5H5",
@@ -827,8 +853,8 @@ public class TestUtils {
     );
   }
 
-  public static JsonNode givenMediaJson() throws JsonProcessingException {
-    return MAPPER.readTree(
+  public static JsonNode givenMediaJson() {
+    return JSON_MAPPER.readTree(
         """
                         {
               "@id": "https://doi.org/TEST/WVW-SCM-C9Z",

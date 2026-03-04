@@ -1,6 +1,7 @@
 package eu.dissco.exportjob.component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static eu.dissco.exportjob.configuration.ApplicationConfiguration.DATE_STRING;
+
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 @Profile(Profiles.DWC_DP)
@@ -32,11 +34,10 @@ public class DataPackageComponent {
   @Qualifier("dataPackageTemplate")
   private final Template dataPackageTemplate;
   private final XMLInputFactory xmlFactory;
-  private final ObjectMapper mapper;
+  private final JsonMapper mapper;
 
-  private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(
-      "yyyy-MM-dd'T'HH:mm:ss.SSSXXX").withZone(ZoneOffset.UTC);
-
+  private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_STRING)
+      .withZone(ZoneOffset.UTC);
 
   public String formatDataPackage(String eml, Set<DwcDpClasses> filesContainingRecords)
       throws FailedProcessingException {

@@ -2,9 +2,10 @@ package eu.dissco.exportjob.service;
 
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
-import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
+import static eu.dissco.exportjob.utils.TestUtils.JSON_MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.SOURCE_SYSTEM_ID;
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
+import static eu.dissco.exportjob.utils.TestUtils.createMarkAsCompleteBody;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static eu.dissco.exportjob.utils.TestUtils.givenMediaJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenSourceSystemRequest;
@@ -17,8 +18,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.DataPackageComponent;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.properties.DwcDpProperties;
@@ -28,7 +28,6 @@ import eu.dissco.exportjob.repository.DatabaseRepository;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,6 +44,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
+import tools.jackson.databind.JsonNode;
 
 @ExtendWith(MockitoExtension.class)
 class DwcDpServiceTest {
@@ -73,12 +73,12 @@ class DwcDpServiceTest {
   @Mock
   private DataPackageComponent dataPackageComponent;
 
-  static Stream<JsonNode> jsonProvider() throws JsonProcessingException {
+  static Stream<JsonNode> jsonProvider() {
     return Stream.of(givenSpecimenJson(), givenSpecimenJsonOther());
   }
 
-  public static JsonNode givenSpecimenJsonOther() throws JsonProcessingException {
-    return MAPPER.readTree(
+  public static JsonNode givenSpecimenJsonOther() {
+    return JSON_MAPPER.readTree(
         """
             {
               "@id": "https://doi.org/TEST/W4K-QC6-5H5",
@@ -487,8 +487,8 @@ class DwcDpServiceTest {
   @BeforeEach
   void setup() {
     service = new DwcDpService(elasticSearchRepository, exporterBackendClient, s3Repository,
-        indexProperties, MAPPER, databaseRepository, jobProperties, dwcDpProperties, environment,
-        sourceSystemRepository, dataPackageComponent);
+        indexProperties, databaseRepository, jobProperties, dwcDpProperties, environment,
+        sourceSystemRepository, dataPackageComponent, JSON_MAPPER);
   }
 
   @AfterEach
@@ -526,7 +526,8 @@ class DwcDpServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(exporterBackendClient).should().markJobAsComplete(
+        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
   }
 
   @Test
@@ -558,7 +559,8 @@ class DwcDpServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(exporterBackendClient).should().markJobAsComplete(
+        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
   }
 
   @Test
@@ -576,7 +578,8 @@ class DwcDpServiceTest {
     then(elasticSearchRepository).should().shutdown();
     then(sourceSystemRepository).shouldHaveNoInteractions();
     then(s3Repository).shouldHaveNoInteractions();
-    then(exporterBackendClient).should().updateJobState(JOB_ID, JobStateEndpoint.FAILED);
+    then(exporterBackendClient).should()
+        .updateJobState(JOB_ID.toString(), JobStateEndpoint.FAILED.getEndpoint());
   }
 
   @Test
@@ -594,7 +597,8 @@ class DwcDpServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().updateJobState(JOB_ID, JobStateEndpoint.FAILED);
+    then(exporterBackendClient).should()
+        .updateJobState(JOB_ID.toString(), JobStateEndpoint.FAILED.getEndpoint());
   }
 
   @Test
