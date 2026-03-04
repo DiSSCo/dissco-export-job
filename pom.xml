@@ -29,7 +29,6 @@
     <opencsv.version>5.11.1</opencsv.version>
     <amazon.awssdk.version>2.31.45</amazon.awssdk.version>
     <testcontainers.version>1.21.4</testcontainers.version>
-    <ok-http.version>4.12.0</ok-http.version>
     <dwca-io.version>3.0.0</dwca-io.version>
     <sonar.organization>dissco</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
