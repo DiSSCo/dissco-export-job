@@ -46,7 +46,7 @@ public class WebClientConfiguration {
   }
 
   @Bean
-  public ExporterBackendClient handleClient(OAuth2AuthorizedClientManager authorizedClientManager) {
+  public ExporterBackendClient exporterBackendClient(OAuth2AuthorizedClientManager authorizedClientManager) {
     // Set up Oauth2
     var oauth2Client = new ServletOAuth2AuthorizedClientExchangeFilterFunction(
         authorizedClientManager);
@@ -54,7 +54,6 @@ public class WebClientConfiguration {
     // Build web client
     var webClient = WebClient.builder()
         .apply(oauth2Client.oauth2Configuration())
-        .clientConnector(new ReactorClientHttpConnector(HttpClient.create().followRedirect(true)))
         .baseUrl(backendEndpoint)
         .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .build();

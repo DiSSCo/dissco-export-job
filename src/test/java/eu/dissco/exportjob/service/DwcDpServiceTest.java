@@ -5,7 +5,6 @@ import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
 import static eu.dissco.exportjob.utils.TestUtils.JSON_MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.SOURCE_SYSTEM_ID;
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
-import static eu.dissco.exportjob.utils.TestUtils.createMarkAsCompleteBody;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static eu.dissco.exportjob.utils.TestUtils.givenMediaJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenSourceSystemRequest;
@@ -18,8 +17,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
-import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.DataPackageComponent;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.properties.DwcDpProperties;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -55,7 +54,7 @@ class DwcDpServiceTest {
   @Mock
   private ElasticSearchRepository elasticSearchRepository;
   @Mock
-  private ExporterBackendClient exporterBackendClient;
+  private JobRequestComponent jobRequestComponent;
   @Mock
   private S3Repository s3Repository;
   @Mock
@@ -486,7 +485,7 @@ class DwcDpServiceTest {
 
   @BeforeEach
   void setup() {
-    service = new DwcDpService(elasticSearchRepository, exporterBackendClient, s3Repository,
+    service = new DwcDpService(elasticSearchRepository, jobRequestComponent, s3Repository,
         indexProperties, databaseRepository, jobProperties, dwcDpProperties, environment,
         sourceSystemRepository, dataPackageComponent, JSON_MAPPER);
   }
@@ -526,8 +525,7 @@ class DwcDpServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(
-        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
+    then(jobRequestComponent).should().markAsComplete(givenJobRequest(), DOWNLOAD_LINK);
   }
 
   @Test
@@ -559,8 +557,7 @@ class DwcDpServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(
-        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
+    then(jobRequestComponent).should().markAsComplete(givenSourceSystemRequest(), DOWNLOAD_LINK);
   }
 
   @Test
@@ -578,8 +575,10 @@ class DwcDpServiceTest {
     then(elasticSearchRepository).should().shutdown();
     then(sourceSystemRepository).shouldHaveNoInteractions();
     then(s3Repository).shouldHaveNoInteractions();
-    then(exporterBackendClient).should()
-        .updateJobState(JOB_ID.toString(), JobStateEndpoint.FAILED.getEndpoint());
+    then(jobRequestComponent).should()
+        .updateJobState(givenJobRequest(Boolean.TRUE), JobStateEndpoint.RUNNING);
+    then(jobRequestComponent).should()
+        .updateJobState(givenJobRequest(Boolean.TRUE), JobStateEndpoint.FAILED);
   }
 
   @Test
@@ -597,8 +596,7 @@ class DwcDpServiceTest {
 
     // Then
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should()
-        .updateJobState(JOB_ID.toString(), JobStateEndpoint.FAILED.getEndpoint());
+    then(jobRequestComponent).should().updateJobState(givenJobRequest(), JobStateEndpoint.FAILED);
   }
 
   @Test

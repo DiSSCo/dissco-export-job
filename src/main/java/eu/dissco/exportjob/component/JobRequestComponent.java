@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 @Slf4j
@@ -19,6 +20,7 @@ public class JobRequestComponent {
 
   private final JobProperties properties;
   private final ExporterBackendClient client;
+  private final JsonMapper mapper;
 
   public JobRequest getJobRequest() throws FailedProcessingException {
     var searchParams = new ArrayList<SearchParam>();
@@ -32,6 +34,17 @@ public class JobRequestComponent {
     }
     log.info("Received job request with id {} and {} search parameters", properties.getJobId(), searchParams);
     return new JobRequest(searchParams, TargetType.fromString(properties.getTargetType()), properties.getJobId(), properties.getIsSourceSystemJob());
+  }
+
+  public void markAsComplete(JobRequest jobRequest, String url) {
+    var body = mapper.createObjectNode()
+        .put("id", jobRequest.jobId().toString())
+        .put("downloadLink", url);
+    client.markJobAsComplete(body);
+  }
+
+  public void updateJobState(JobRequest jobRequest, JobStateEndpoint endpoint) {
+    client.updateJobState(jobRequest.jobId().toString(), endpoint.getEndpoint());
   }
 
 }

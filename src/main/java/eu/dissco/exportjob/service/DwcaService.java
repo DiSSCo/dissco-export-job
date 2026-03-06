@@ -11,6 +11,7 @@ import static eu.dissco.exportjob.utils.ExportUtils.retrieveTerm;
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.DwcaZipWriter;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -104,12 +105,12 @@ public class DwcaService extends AbstractExportJobService {
   private final S3Properties s3Properties;
 
   public DwcaService(
-      ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
+      ElasticSearchRepository elasticSearchRepository, JobRequestComponent jobRequestComponent,
       S3Repository s3Repository, IndexProperties indexProperties, Environment environment,
       SourceSystemRepository sourceSystemRepository,
       DwcaZipWriter dwcaZipWriter, Template emlTemplate, S3Properties s3Properties,
       JsonMapper mapper) {
-    super(elasticSearchRepository, indexProperties, mapper, exporterBackendClient, s3Repository,
+    super(elasticSearchRepository, indexProperties, mapper, jobRequestComponent, s3Repository,
         environment, sourceSystemRepository);
     this.dwcaZipWriter = dwcaZipWriter;
     this.emlTemplate = emlTemplate;

@@ -40,6 +40,7 @@ import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.CsvHeaderStrategy;
 import eu.dissco.exportjob.component.DataPackageComponent;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
@@ -118,13 +119,13 @@ public class DwcDpService extends AbstractExportJobService {
   private final DataPackageComponent dataPackageComponent;
 
   public DwcDpService(
-      ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
+      ElasticSearchRepository elasticSearchRepository, JobRequestComponent jobRequestComponent,
       S3Repository s3Repository, IndexProperties indexProperties,
       DatabaseRepository databaseRepository, JobProperties jobProperties,
       DwcDpProperties dwcDpProperties, Environment environment,
       SourceSystemRepository sourceSystemRepository, DataPackageComponent dataPackageComponent,
       JsonMapper mapper) {
-    super(elasticSearchRepository, indexProperties, mapper, exporterBackendClient, s3Repository,
+    super(elasticSearchRepository, indexProperties, mapper, jobRequestComponent, s3Repository,
         environment, sourceSystemRepository);
     this.databaseRepository = databaseRepository;
     this.jobProperties = jobProperties;

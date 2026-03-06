@@ -116,12 +116,6 @@ public class TestUtils {
     return givenSpecimenJson(SOURCE_SYSTEM_ID);
   }
 
-  public static JsonNode createMarkAsCompleteBody(UUID jobId, String url) {
-    return JSON_MAPPER.createObjectNode()
-        .put("id", jobId.toString())
-        .put("downloadLink", url);
-  }
-
   public static JsonNode givenSpecimenJson(String sourceSystemId) {
     return JSON_MAPPER.readTree(
         """

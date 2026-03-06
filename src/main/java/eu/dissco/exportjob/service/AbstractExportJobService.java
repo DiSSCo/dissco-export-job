@@ -4,6 +4,7 @@ import static eu.dissco.exportjob.utils.ExportUtils.removeProxy;
 
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.client.ExporterBackendClient;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
@@ -41,40 +42,33 @@ public abstract class AbstractExportJobService {
   protected final ElasticSearchRepository elasticSearchRepository;
   protected final IndexProperties indexProperties;
   protected final JsonMapper mapper;
-  private final ExporterBackendClient exporterBackendClient;
+  private final JobRequestComponent jobRequestComponent;
   private final S3Repository s3Repository;
   private final Environment environment;
   private final SourceSystemRepository sourceSystemRepository;
 
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
     try {
-      exporterBackendClient.updateJobState(jobRequest.jobId().toString(),
-          JobStateEndpoint.RUNNING.getEndpoint());
+      jobRequestComponent.updateJobState(jobRequest, JobStateEndpoint.RUNNING);
       var uploadData = processRequest(jobRequest);
       if (uploadData) {
         postProcessResults(jobRequest);
         var url = s3Repository.uploadResults(new File(indexProperties.getTempFileLocation()),
             jobRequest.jobId(), extensionMap.get(environment.getActiveProfiles()[0]));
         log.info("S3 results available at {}", url);
-        markAsComplete(jobRequest, url);
+        jobRequestComponent.markAsComplete(jobRequest, url);
       } else {
         log.warn("No results found for job {}", jobRequest.jobId());
-        markAsComplete(jobRequest, null);
+        jobRequestComponent.markAsComplete(jobRequest, null);
       }
       log.info("Successfully completed job {}", jobRequest.jobId());
     } catch (IOException | S3UploadException | FailedProcessingException e) {
       log.error("An error has occurred", e);
-      exporterBackendClient.updateJobState(jobRequest.jobId().toString(),
-          JobStateEndpoint.FAILED.getEndpoint());
+      jobRequestComponent.updateJobState(jobRequest, JobStateEndpoint.FAILED);
     }
   }
 
-  private void markAsComplete(JobRequest jobRequest, String url) {
-    var body = mapper.createObjectNode()
-        .put("id", jobRequest.jobId().toString())
-        .put("downloadLink", url);
-    exporterBackendClient.markJobAsComplete(body);
-  }
+
 
   protected boolean processRequest(JobRequest jobRequest)
       throws IOException, FailedProcessingException {
@@ -117,7 +111,7 @@ public abstract class AbstractExportJobService {
     return eml;
   }
 
-  protected String writeEmlFileForSourceSystem(String sourceSystemId, FileSystem fs)
+  protected void writeEmlFileForSourceSystem(String sourceSystemId, FileSystem fs)
       throws FailedProcessingException, IOException {
     log.info("Retrieving EML for source system ID: {}", sourceSystemId);
     var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
@@ -125,7 +119,6 @@ public abstract class AbstractExportJobService {
     var sourceSystemFile = fs.getPath("dataset",
         removeProxy(sourceSystemId).replace('/', '-').toLowerCase() + ".xml");
     Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
-    return eml;
   }
 
   protected abstract void writeHeaderToFile() throws IOException;

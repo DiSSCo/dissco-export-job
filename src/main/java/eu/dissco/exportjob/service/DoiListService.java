@@ -2,6 +2,7 @@ package eu.dissco.exportjob.service;
 
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.client.ExporterBackendClient;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
@@ -28,10 +29,10 @@ public class DoiListService extends AbstractExportJobService {
       StandardCharsets.UTF_8);
 
   public DoiListService(
-      ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
+      ElasticSearchRepository elasticSearchRepository, JobRequestComponent jobRequestComponent,
       S3Repository s3Repository, IndexProperties indexProperties, Environment environment,
       SourceSystemRepository sourceSystemRepository, JsonMapper mapper) {
-    super(elasticSearchRepository, indexProperties, mapper, exporterBackendClient, s3Repository,
+    super(elasticSearchRepository, indexProperties, mapper, jobRequestComponent, s3Repository,
         environment, sourceSystemRepository);
   }
 

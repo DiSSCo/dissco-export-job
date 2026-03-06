@@ -13,7 +13,6 @@ import static eu.dissco.exportjob.utils.TestUtils.givenMediaJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenMinimalSpecimenJson;
 import static eu.dissco.exportjob.utils.TestUtils.givenSourceSystemRequest;
 import static eu.dissco.exportjob.utils.TestUtils.givenSpecimenJson;
-import static eu.dissco.exportjob.utils.TestUtils.createMarkAsCompleteBody;
 import static eu.dissco.exportjob.utils.TestUtils.removeTempFile;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -23,8 +22,8 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 
-import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.DwcaZipWriter;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.exceptions.S3UploadException;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -56,7 +55,7 @@ class DwcaServiceTest {
   @Mock
   private ElasticSearchRepository elasticSearchRepository;
   @Mock
-  private ExporterBackendClient exporterBackendClient;
+  private JobRequestComponent jobRequestComponent;
   @Mock
   private S3Repository s3Repository;
   @Mock
@@ -75,7 +74,7 @@ class DwcaServiceTest {
     removeTempFile();
     configuration.setDirectoryForTemplateLoading(new File("src/main/resources/templates/"));
     var template = configuration.getTemplate("dissco-eml.ftl");
-    service = new DwcaService(elasticSearchRepository, exporterBackendClient, s3Repository,
+    service = new DwcaService(elasticSearchRepository, jobRequestComponent, s3Repository,
         indexProperties, environment, sourceSystemRepository, dwcaZipWriter, template,
         s3Properties, JSON_MAPPER);
   }
@@ -109,8 +108,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(
-        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
+    then(jobRequestComponent).should().markAsComplete(givenJobRequest(), DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
   }
 
@@ -135,8 +133,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(
-        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
+    then(jobRequestComponent).should().markAsComplete(givenSourceSystemRequest(), DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
   }
 
@@ -160,8 +157,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(
-        createMarkAsCompleteBody(JOB_ID, DOWNLOAD_LINK));
+    then(jobRequestComponent).should().markAsComplete(givenJobRequest(), DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
   }
 
@@ -184,7 +180,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().updateJobState(JOB_ID.toString(), FAILED.getEndpoint());
+    then(jobRequestComponent).should().updateJobState(givenJobRequest(), FAILED);
   }
 
 }
