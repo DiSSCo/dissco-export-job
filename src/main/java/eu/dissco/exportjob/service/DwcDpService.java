@@ -37,7 +37,6 @@ import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import eu.dissco.exportjob.Profiles;
-import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.CsvHeaderStrategy;
 import eu.dissco.exportjob.component.DataPackageComponent;
 import eu.dissco.exportjob.component.JobRequestComponent;

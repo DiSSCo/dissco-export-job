@@ -9,7 +9,6 @@ import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveTerm;
 
 import eu.dissco.exportjob.Profiles;
-import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.DwcaZipWriter;
 import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;

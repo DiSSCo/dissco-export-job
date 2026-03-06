@@ -1,7 +1,6 @@
 package eu.dissco.exportjob.service;
 
 import eu.dissco.exportjob.Profiles;
-import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.properties.IndexProperties;
