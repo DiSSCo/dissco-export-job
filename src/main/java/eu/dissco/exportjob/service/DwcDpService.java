@@ -32,8 +32,6 @@ import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedAgentName;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveCombinedCitation;
 import static eu.dissco.exportjob.utils.ExportUtils.retrieveIdentifier;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
@@ -41,6 +39,7 @@ import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 import eu.dissco.exportjob.Profiles;
 import eu.dissco.exportjob.component.CsvHeaderStrategy;
 import eu.dissco.exportjob.component.DataPackageComponent;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.dwcdp.DwCDpMaterial;
 import eu.dissco.exportjob.domain.dwcdp.DwcDpAgent;
@@ -82,7 +81,6 @@ import eu.dissco.exportjob.schema.Event;
 import eu.dissco.exportjob.schema.Identification;
 import eu.dissco.exportjob.schema.Identifier;
 import eu.dissco.exportjob.schema.OdsHasRole;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.io.BufferedWriter;
@@ -106,27 +104,28 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
 @Profile(Profiles.DWC_DP)
 public class DwcDpService extends AbstractExportJobService {
 
-  private final ObjectMapper objectMapper;
   private final DatabaseRepository databaseRepository;
   private final JobProperties jobProperties;
   private final DwcDpProperties dwcDpProperties;
   private final DataPackageComponent dataPackageComponent;
 
   public DwcDpService(
-      ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
-      S3Repository s3Repository, IndexProperties indexProperties, ObjectMapper objectMapper,
+      ElasticSearchRepository elasticSearchRepository, JobRequestComponent jobRequestComponent,
+      S3Repository s3Repository, IndexProperties indexProperties,
       DatabaseRepository databaseRepository, JobProperties jobProperties,
       DwcDpProperties dwcDpProperties, Environment environment,
-      SourceSystemRepository sourceSystemRepository, DataPackageComponent dataPackageComponent) {
-    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository,
+      SourceSystemRepository sourceSystemRepository, DataPackageComponent dataPackageComponent,
+      JsonMapper mapper) {
+    super(elasticSearchRepository, indexProperties, mapper, jobRequestComponent, s3Repository,
         environment, sourceSystemRepository);
-    this.objectMapper = objectMapper;
     this.databaseRepository = databaseRepository;
     this.jobProperties = jobProperties;
     this.dwcDpProperties = dwcDpProperties;
@@ -350,7 +349,7 @@ public class DwcDpService extends AbstractExportJobService {
 
   private void mapSpecimenToDwcDp(
       Map<DwcDpClasses, List<Pair<String, Object>>> results, List<JsonNode> searchResult) {
-    searchResult.stream().map(json -> objectMapper.convertValue(json, DigitalSpecimen.class))
+    searchResult.stream().map(json -> mapper.convertValue(json, DigitalSpecimen.class))
         .forEach(
             digitalSpecimen -> {
               var eventId = mapEvent(digitalSpecimen, results);
@@ -533,7 +532,7 @@ public class DwcDpService extends AbstractExportJobService {
 
   private void mapMediaToDwcDp(Map<DwcDpClasses, List<Pair<String, Object>>> results,
       List<JsonNode> searchResult) {
-    searchResult.stream().map(json -> objectMapper.convertValue(json, DigitalMedia.class))
+    searchResult.stream().map(json -> mapper.convertValue(json, DigitalMedia.class))
         .forEach(media -> {
           var dpMedia = new DwcDpMedia();
           dpMedia.setMediaID(media.getId());

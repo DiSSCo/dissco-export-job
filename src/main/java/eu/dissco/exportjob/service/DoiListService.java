@@ -1,13 +1,12 @@
 package eu.dissco.exportjob.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import eu.dissco.exportjob.Profiles;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 @Slf4j
 @Service
@@ -27,9 +28,11 @@ public class DoiListService extends AbstractExportJobService {
       StandardCharsets.UTF_8);
 
   public DoiListService(
-      ElasticSearchRepository elasticSearchRepository, ExporterBackendClient exporterBackendClient,
-      S3Repository s3Repository, IndexProperties indexProperties, Environment environment, SourceSystemRepository sourceSystemRepository) {
-    super(elasticSearchRepository, indexProperties, exporterBackendClient, s3Repository, environment, sourceSystemRepository);
+      ElasticSearchRepository elasticSearchRepository, JobRequestComponent jobRequestComponent,
+      S3Repository s3Repository, IndexProperties indexProperties, Environment environment,
+      SourceSystemRepository sourceSystemRepository, JsonMapper mapper) {
+    super(elasticSearchRepository, indexProperties, mapper, jobRequestComponent, s3Repository,
+        environment, sourceSystemRepository);
   }
 
   @Override
@@ -58,7 +61,8 @@ public class DoiListService extends AbstractExportJobService {
         var byteOutputStream = new FileOutputStream(indexProperties.getTempFileLocation(), true);
         var gzip = new GZIPOutputStream(byteOutputStream)) {
       for (var result : searchResults) {
-        var col = ("\n" + result.get(ID_FIELD).asText() + "," + result.get(PHYSICAL_ID_FIELD).asText())
+        var col = ("\n" + result.get(ID_FIELD).asString() + "," + result.get(PHYSICAL_ID_FIELD)
+            .asString())
             .getBytes(StandardCharsets.UTF_8);
         gzip.write(col, 0, col.length);
       }
@@ -66,8 +70,8 @@ public class DoiListService extends AbstractExportJobService {
     }
   }
 
-  protected List<String> targetFields(){
-   return List.of(ID_FIELD, PHYSICAL_ID_FIELD);
+  protected List<String> targetFields() {
+    return List.of(ID_FIELD, PHYSICAL_ID_FIELD);
   }
 
 

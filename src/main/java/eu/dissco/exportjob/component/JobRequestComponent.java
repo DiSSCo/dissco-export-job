@@ -1,16 +1,17 @@
 package eu.dissco.exportjob.component;
 
+import eu.dissco.exportjob.client.ExporterBackendClient;
 import eu.dissco.exportjob.domain.JobRequest;
 import eu.dissco.exportjob.domain.JobStateEndpoint;
 import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.properties.JobProperties;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 @Slf4j
@@ -19,12 +20,13 @@ public class JobRequestComponent {
 
   private final JobProperties properties;
   private final ExporterBackendClient client;
+  private final JsonMapper mapper;
 
   public JobRequest getJobRequest() throws FailedProcessingException {
     var searchParams = new ArrayList<SearchParam>();
     if (properties.getInputFields().size() != properties.getInputValues().size()) {
       log.error("Mismatch between input fields and input values for searching");
-      client.updateJobState(properties.getJobId(), JobStateEndpoint.FAILED);
+      client.updateJobState(properties.getJobId().toString(), JobStateEndpoint.FAILED.getEndpoint());
       throw new FailedProcessingException();
     }
     for (int i = 0; i < properties.getInputFields().size(); i++) {
@@ -32,6 +34,17 @@ public class JobRequestComponent {
     }
     log.info("Received job request with id {} and {} search parameters", properties.getJobId(), searchParams);
     return new JobRequest(searchParams, TargetType.fromString(properties.getTargetType()), properties.getJobId(), properties.getIsSourceSystemJob());
+  }
+
+  public void markAsComplete(JobRequest jobRequest, String url) {
+    var body = mapper.createObjectNode()
+        .put("id", jobRequest.jobId().toString())
+        .put("downloadLink", url);
+    client.markJobAsComplete(body);
+  }
+
+  public void updateJobState(JobRequest jobRequest, JobStateEndpoint endpoint) {
+    client.updateJobState(jobRequest.jobId().toString(), endpoint.getEndpoint());
   }
 
 }

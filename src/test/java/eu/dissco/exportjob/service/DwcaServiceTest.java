@@ -4,7 +4,7 @@ import static eu.dissco.exportjob.domain.JobStateEndpoint.FAILED;
 import static eu.dissco.exportjob.utils.TestUtils.DOWNLOAD_LINK;
 import static eu.dissco.exportjob.utils.TestUtils.EML;
 import static eu.dissco.exportjob.utils.TestUtils.JOB_ID;
-import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
+import static eu.dissco.exportjob.utils.TestUtils.JSON_MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.SECOND_SOURCE_SYSTEM_ID;
 import static eu.dissco.exportjob.utils.TestUtils.SOURCE_SYSTEM_ID;
 import static eu.dissco.exportjob.utils.TestUtils.TEMP_FILE_NAME;
@@ -23,6 +23,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
 
 import eu.dissco.exportjob.component.DwcaZipWriter;
+import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
 import eu.dissco.exportjob.exceptions.S3UploadException;
 import eu.dissco.exportjob.properties.IndexProperties;
@@ -30,9 +31,7 @@ import eu.dissco.exportjob.properties.S3Properties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
-import eu.dissco.exportjob.web.ExporterBackendClient;
 import freemarker.template.Configuration;
-import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import java.io.File;
 import java.io.IOException;
@@ -53,11 +52,10 @@ class DwcaServiceTest {
   private final Configuration configuration = new Configuration(Configuration.VERSION_2_3_32);
 
   private DwcaService service;
-  private Template template;
   @Mock
   private ElasticSearchRepository elasticSearchRepository;
   @Mock
-  private ExporterBackendClient exporterBackendClient;
+  private JobRequestComponent jobRequestComponent;
   @Mock
   private S3Repository s3Repository;
   @Mock
@@ -75,10 +73,10 @@ class DwcaServiceTest {
   void setup() throws IOException {
     removeTempFile();
     configuration.setDirectoryForTemplateLoading(new File("src/main/resources/templates/"));
-    template = configuration.getTemplate("dissco-eml.ftl");
-    service = new DwcaService(elasticSearchRepository, exporterBackendClient, s3Repository,
-        indexProperties, MAPPER, environment, sourceSystemRepository, dwcaZipWriter, template,
-        s3Properties);
+    var template = configuration.getTemplate("dissco-eml.ftl");
+    service = new DwcaService(elasticSearchRepository, jobRequestComponent, s3Repository,
+        indexProperties, environment, sourceSystemRepository, dwcaZipWriter, template,
+        s3Properties, JSON_MAPPER);
   }
 
   @AfterEach
@@ -110,7 +108,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(jobRequestComponent).should().markAsComplete(givenJobRequest(), DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
   }
 
@@ -135,7 +133,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(jobRequestComponent).should().markAsComplete(givenSourceSystemRequest(), DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
   }
 
@@ -159,7 +157,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().markJobAsComplete(JOB_ID, DOWNLOAD_LINK);
+    then(jobRequestComponent).should().markAsComplete(givenJobRequest(), DOWNLOAD_LINK);
     then(dwcaZipWriter).should().close();
   }
 
@@ -182,7 +180,7 @@ class DwcaServiceTest {
     // Then
     then(dwcaZipWriter).should().writeRecords(anyMap());
     then(elasticSearchRepository).should().shutdown();
-    then(exporterBackendClient).should().updateJobState(JOB_ID, FAILED);
+    then(jobRequestComponent).should().updateJobState(givenJobRequest(), FAILED);
   }
 
 }

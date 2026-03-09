@@ -1,7 +1,7 @@
 package eu.dissco.exportjob.repository;
 
 import static eu.dissco.exportjob.utils.TestUtils.DOI_1;
-import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
+import static eu.dissco.exportjob.utils.TestUtils.JSON_MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.givenSpecimenJson;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +26,8 @@ class DatabaseRepositoryTest extends BaseRepositoryIT {
     var specimenList = new ArrayList<Pair<String, Object>>();
     var expectedRecords = 10;
     for (int i = 0; i < expectedRecords; i++) {
-      specimenList.add(Pair.of(DOI_1 + i, MAPPER.treeToValue(givenSpecimenJson(), Object.class)));
+      specimenList.add(
+          Pair.of(DOI_1 + i, JSON_MAPPER.treeToValue(givenSpecimenJson(), Object.class)));
     }
     var tableName = "temp_table_640f3acb_material";
     repository.createTable(tableName);

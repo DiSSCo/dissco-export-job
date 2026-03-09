@@ -1,7 +1,6 @@
 package eu.dissco.exportjob.repository;
 
 import static eu.dissco.exportjob.utils.TestUtils.DOI_2;
-import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.ORG_1;
 import static eu.dissco.exportjob.utils.TestUtils.ORG_2;
 import static eu.dissco.exportjob.utils.TestUtils.PHYS_ID_2;
@@ -14,12 +13,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import eu.dissco.exportjob.domain.SearchParam;
 import eu.dissco.exportjob.domain.TargetType;
 import eu.dissco.exportjob.properties.ElasticSearchProperties;
@@ -38,6 +35,8 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
 
 @Testcontainers
 class ElasticSearchRepositoryTest {
@@ -69,7 +68,7 @@ class ElasticSearchRepositoryTest {
         .setSSLContext(container.createSslContextFromCa()).build();
 
     ElasticsearchTransport transport = new Rest5ClientTransport(restClient,
-        new JacksonJsonpMapper(MAPPER));
+        new Jackson3JsonpMapper());
 
     client = new ElasticsearchClient(transport);
   }
@@ -155,7 +154,7 @@ class ElasticSearchRepositoryTest {
 
     // When
     var result = elasticRepository.getTargetMediaById(
-        mediaList.stream().map(node -> node.get("@id").asText()).toList());
+        mediaList.stream().map(node -> node.get("@id").asString()).toList());
 
     // Then
     assertThat(result).isEqualTo(mediaList);
@@ -166,7 +165,7 @@ class ElasticSearchRepositoryTest {
     var bulkRequest = new BulkRequest.Builder();
     for (var jsonObject : jsonObjects) {
       bulkRequest.operations(op -> op.index(
-          idx -> idx.index(indexName).id(jsonObject.get("@id").asText())
+          idx -> idx.index(indexName).id(jsonObject.get("@id").asString())
               .document(jsonObject)));
     }
     client.bulk(bulkRequest.build());
