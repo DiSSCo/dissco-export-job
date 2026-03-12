@@ -67,8 +67,6 @@ public abstract class AbstractExportJobService {
     }
   }
 
-
-
   protected boolean processRequest(JobRequest jobRequest)
       throws IOException, FailedProcessingException {
     String lastId = null;

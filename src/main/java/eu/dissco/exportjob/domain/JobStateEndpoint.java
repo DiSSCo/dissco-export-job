@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum JobStateEndpoint {
-  FAILED("/failed"),
-  RUNNING("/running");
+  FAILED("failed"),
+  RUNNING("running");
 
   private final String endpoint;
   JobStateEndpoint(String s){
