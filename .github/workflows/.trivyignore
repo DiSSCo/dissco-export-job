@@ -10,6 +10,10 @@ GHSA-72hv-8253-57qq
 # Issue with the underlying Docker image, needs to be fixed in libpng and then the Temurin 25 Alpine image
 CVE-2026-25646
 
+# March 12, 2026
+# Issue with alpine image, zlib: zlib: Arbitrary code execution via buffer overflow
+CVE-2026-22184
+
 # March 6, 2026
 # jackson-core has Nesting Depth Constraint Bypass in
 CVE-2026-29062

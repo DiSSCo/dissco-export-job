@@ -7,9 +7,9 @@ import tools.jackson.databind.JsonNode;
 
 public interface ExporterBackendClient {
 
-    @PostExchange("{jobId}/{stateEndpoint}")
+    @PostExchange("/{jobId}/{stateEndpoint}")
     void updateJobState(@PathVariable String jobId, @PathVariable String stateEndpoint);
 
-    @PostExchange("completed")
+    @PostExchange("/completed")
     void markJobAsComplete(@RequestBody JsonNode body);
 }
