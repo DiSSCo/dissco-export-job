@@ -17,3 +17,7 @@ CVE-2026-22184
 # March 6, 2026
 # jackson-core has Nesting Depth Constraint Bypass in
 CVE-2026-29062
+
+# March 20, 2026
+# Issue with libexpat, alpine image needs to update
+CVE-2026-32767
