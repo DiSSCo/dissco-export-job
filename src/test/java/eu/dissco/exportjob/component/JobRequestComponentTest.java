@@ -8,7 +8,7 @@ import static eu.dissco.exportjob.utils.TestUtils.ORG_2;
 import static eu.dissco.exportjob.utils.TestUtils.ORG_FIELD_NAME;
 import static eu.dissco.exportjob.utils.TestUtils.givenJobRequest;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.then;
 
 import eu.dissco.exportjob.client.ExporterBackendClient;
