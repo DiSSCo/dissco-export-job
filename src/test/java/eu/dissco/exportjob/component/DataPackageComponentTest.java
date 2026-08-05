@@ -3,7 +3,7 @@ package eu.dissco.exportjob.component;
 import static eu.dissco.exportjob.utils.TestUtils.JSON_MAPPER;
 import static eu.dissco.exportjob.utils.TestUtils.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.dissco.exportjob.domain.dwcdp.DwcDpClasses;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;

@@ -3,7 +3,7 @@ package eu.dissco.exportjob.repository;
 import static eu.dissco.exportjob.database.jooq.Tables.SOURCE_SYSTEM;
 import static eu.dissco.exportjob.utils.TestUtils.SOURCE_SYSTEM_ID;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import eu.dissco.exportjob.database.jooq.enums.TranslatorType;
 import eu.dissco.exportjob.exceptions.FailedProcessingException;
