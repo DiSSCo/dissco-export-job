@@ -2,22 +2,24 @@
 # Issue with GBIF library, is not used in the project.
 CVE-2025-52999
 
-# Mar 2 2026
-# Issue with Jackson library, needs to be fixed in a spring boot dep update
-GHSA-72hv-8253-57qq
+## July 2, 2026
+## Issue with p11-kit
+CVE-2026-2100
 
-# Mar 2 2026
-# Issue with the underlying Docker image, needs to be fixed in libpng and then the Temurin 25 Alpine image
-CVE-2026-25646
+# July 27, 2026
+# Issue with libexpat, alpine to update
+CVE-2026-56131
+CVE-2026-56408
 
-# March 12, 2026
-# Issue with alpine image, zlib: zlib: Arbitrary code execution via buffer overflow
-CVE-2026-22184
+# July 27, 2026
+# Issue with netty, spring boot to update
+CVE-2026-59901
+CVE-2026-55831
+CVE-2026-55833
+CVE-2026-56745
+CVE-2026-56816
+CVE-2026-56819
 
-# March 6, 2026
-# jackson-core has Nesting Depth Constraint Bypass in
-CVE-2026-29062
-
-# March 20, 2026
-# Issue with libexpat, alpine image needs to update
-CVE-2026-32767
+# July 27, 2026
+# Issue with postgres, spring boot to update
+CVE-2026-54291
