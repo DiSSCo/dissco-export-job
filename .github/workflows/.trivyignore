@@ -23,3 +23,9 @@ CVE-2026-69220
 CVE-2026-65182
 CVE-2026-65905
 CVE-2026-68525
+
+# Sep 3, 2026
+# Some packages (e.g. dwc-api) use the 2.x version of Jackson. Need to upgrade these packages
+GHSA-r7wm-3cxj-wff9
+CVE-2026-54512
+CVE-2026-54513
