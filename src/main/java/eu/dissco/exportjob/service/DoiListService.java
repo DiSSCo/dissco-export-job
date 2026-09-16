@@ -29,10 +29,9 @@ public class DoiListService extends AbstractExportJobService {
 
   public DoiListService(
       ElasticSearchRepository elasticSearchRepository, JobRequestComponent jobRequestComponent,
-      S3Repository s3Repository, IndexProperties indexProperties, Environment environment,
-      SourceSystemRepository sourceSystemRepository, JsonMapper mapper) {
+      S3Repository s3Repository, IndexProperties indexProperties, Environment environment, JsonMapper mapper) {
     super(elasticSearchRepository, indexProperties, mapper, jobRequestComponent, s3Repository,
-        environment, sourceSystemRepository);
+        environment);
   }
 
   @Override

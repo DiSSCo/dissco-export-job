@@ -9,7 +9,7 @@ public class DwcDpMaterialReference implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
-  private String referenceID;
-  private String materialEntityID;
+  private String reference_fk;
+  private String materialEntity_fk;
   private String relationshipType;
 }

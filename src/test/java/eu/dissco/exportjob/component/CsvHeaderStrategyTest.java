@@ -14,7 +14,7 @@ class CsvHeaderStrategyTest {
   void testAddHeader() throws CsvRequiredFieldEmptyException {
     //Given
     var expected = List.of(
-        "agentID", "agentRemarks", "agentType", "preferredAgentName");
+        "agent_pk", "agentID", "agentType", "preferredAgentName", "agentRemarks");
     var csvHeaderStrategy = new CsvHeaderStrategy<>(DwcDpAgent.class, false);
 
     // When

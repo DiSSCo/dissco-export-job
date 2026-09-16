@@ -23,7 +23,6 @@ public class DwcDpRelationship implements Serializable {
   private String relatedResourceType;
   private String relatedResourceTypeIRI;
   private String relatedResourceTypeSource;
-  private Integer relationshipOrder;
   private String relationshipAccordingTo;
   private String relationshipAccordingToID;
   private String relationshipEstablishedDate;

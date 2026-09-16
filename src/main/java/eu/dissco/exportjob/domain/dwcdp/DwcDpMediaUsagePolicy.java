@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class DwcDpMediaUsagePolicy implements Serializable {
   
-  private String usagePolicyID;
-  private String mediaID;
+  private String media_fk;
+  private String usagePolicy_fk;
 
 }

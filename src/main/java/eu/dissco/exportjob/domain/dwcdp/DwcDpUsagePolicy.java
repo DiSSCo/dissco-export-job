@@ -9,12 +9,15 @@ public class DwcDpUsagePolicy implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
+  private String usagePolicy_pk;
   private String usagePolicyID;
   private String rights;
   private String rightsIRI;
   private String rightsHolder;
+  private String rightsHolder_fk;
   private String rightsHolderID;
   private String owner;
+  private String owner_fk;
   private String ownerID;
   private String usageTerms;
   private String webStatement;
@@ -31,8 +34,10 @@ public class DwcDpUsagePolicy implements Serializable {
     return (rights == null || rights.isBlank()) &&
         (rightsIRI == null || rightsIRI.isBlank()) &&
         (rightsHolder == null || rightsHolder.isBlank()) &&
+        (rightsHolder_fk == null || rightsHolder_fk.isBlank()) &&
         (rightsHolderID == null || rightsHolderID.isBlank()) &&
         (owner == null || owner.isBlank()) &&
+        (owner_fk == null || owner_fk.isBlank()) &&
         (ownerID == null || ownerID.isBlank()) &&
         (usageTerms == null || usageTerms.isBlank()) &&
         (webStatement == null || webStatement.isBlank()) &&

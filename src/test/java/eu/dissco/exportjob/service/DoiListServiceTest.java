@@ -42,13 +42,11 @@ class DoiListServiceTest {
   private IndexProperties indexProperties;
   @Mock
   private Environment environment;
-  @Mock
-  private SourceSystemRepository sourceSystemRepository;
 
   @BeforeEach
   void init() {
     service = new DoiListService(elasticSearchRepository, jobRequestComponent, s3Repository,
-        indexProperties, environment, sourceSystemRepository, JSON_MAPPER);
+        indexProperties, environment, JSON_MAPPER);
   }
 
   @Test
