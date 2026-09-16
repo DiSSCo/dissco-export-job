@@ -5,18 +5,12 @@ CVE-2025-52999
 # Sep 3, 2026
 # Issue with libexpat, alpine to update
 CVE-2026-66046
-CVE-2026-76641
-CVE-2026-76641
+CVE-2026-76956
+CVE-2026-76957
 
 # Sep 3, 2026
 # Issue with libssl3/libcrypto3
 CVE-2026-14456
-
-# Sep 3, 2026
-# Issue with Rabbitmq client, spring to update
-CVE-2026-63337
-CVE-2026-69219
-CVE-2026-69220
 
 # Sep 3, 2026
 # Issue with tomcat, spring boot to update
@@ -29,3 +23,4 @@ CVE-2026-68525
 GHSA-r7wm-3cxj-wff9
 CVE-2026-54512
 CVE-2026-54513
+CVE-2025-52999
