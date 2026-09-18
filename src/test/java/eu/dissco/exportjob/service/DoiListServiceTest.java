@@ -16,7 +16,6 @@ import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
-import eu.dissco.exportjob.repository.SourceSystemRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
