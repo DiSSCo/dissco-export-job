@@ -95,7 +95,7 @@ public abstract class AbstractDwcService extends AbstractExportJobService {
                     "Is a source system job, but no sourceSystemID provided: " + jobRequest.jobId());
         }
         var sourceSystemId = sourceSystemOptional.get().inputValue();
-        log.info("Retrieving EML for source system ID: {}", sourceSystemId);
+        log.info("Retrieving EML for source system repository with ID: {}", sourceSystemId);
         var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
         var sourceSystemFile = fs.getPath("eml.xml");
         Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);

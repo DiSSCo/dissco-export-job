@@ -41,6 +41,10 @@ jobs:
                   -Dsonar.projectKey=DiSSCo_${{ github.event.repository.name }}
                   -Dsonar.exclusions=**/jooq/**
                   -Dsonar.coverage.exclusions=**/properties/**,**/configuration/**,**/domain/**,**/exception/**,**/maven/**
+                  -Dsonar.cpd.exclusions=**/domain/**
+                  -Dsonar.issue.ignore.multicriteria=e1
+                  -Dsonar.issue.ignore.multicriteria.e1.ruleKey=java:S116
+                  -Dsonar.issue.ignore.multicriteria.e1.resourceKey=**/domain/dwcdp**
       - name: Build image
         run: |
           docker build -t ${{ github.event.repository.name }} .
