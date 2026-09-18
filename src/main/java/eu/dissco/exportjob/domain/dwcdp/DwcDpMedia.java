@@ -9,8 +9,11 @@ public class DwcDpMedia implements Serializable {
   
   @Serial
   private static final long serialVersionUID = 1L;
+  private String media_pk;
   private String mediaID;
+  private String derivedFromMedia_fk;
   private String derivedFromMediaID;
+  private String isPartOfMedia_fk;
   private String isPartOfMediaID;
   private String mediaType;
   private String title;
@@ -20,17 +23,17 @@ public class DwcDpMedia implements Serializable {
   private String subtypeIRI;
   private String collectionCode;
   private String collectionID;
-  private String CreateDate;
+  private String createDate;
   private String timeOfDay;
   private String digitizationDate;
   private String captureDevice;
   private Double frameRate;
   private String resourceCreationTechnique;
-  private Double sample_rate;
+  private Double sampleRate;
   private String modified;
   private String language;
   private String languageIRI;
-  private String MetadataDate;
+  private String metadataDate;
   private String metadataLanguageLiteral;
   private String metadataLanguageIRI;
   private String providerManagedID;
@@ -43,22 +46,24 @@ public class DwcDpMedia implements Serializable {
   private String variantLiteral;
   private String variantIRI;
   private String variantDescription;
-  private Integer PixelXDimension;
-  private Integer PixelYDimension;
+  private Integer pixelXDimension;
+  private Integer pixelYDimension;
   private String hashFunction;
   private String hashValue;
   private String furtherInformationURL;
   private String commenterLiteral;
+  private String commenter_fk;
   private String commenterID;
   private String comments;
-  private String Rating;
+  private String rating;
   private String reviewerLiteral;
+  private String reviewer_fk;
   private String reviewerID;
   private String reviewerComments;
   private String physicalSetting;
   private String subjectCategory;
   private String subjectCategoryIRI;
-  private String subjectCategorySource;
+  private String subjectCategoryVocabulary;
   private String tag;
   private String subjectPartLiteral;
   private String subjectPartIRI;
@@ -77,4 +82,9 @@ public class DwcDpMedia implements Serializable {
   private Double heightFrac;
   private Double widthFrac;
   private Integer radius;
+  private String provenance_fk;
+  private String usagePolicy_fk;
+  private String owner;
+  private String owner_fk;
+  private String license;
 }

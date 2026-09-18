@@ -9,16 +9,22 @@ public class DwcDpEvent implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
+  private String event_pk;
   private String eventID;
-  private String parentEventID;
+  private String parentEvent_fk;
+  private String eventProtocol_fk;
+  private String provenance_fk;
   private String preferredEventName;
   private String eventCategory;
   private String eventType;
   private String datasetName;
   private String datasetID;
   private String fieldNumber;
-  private String eventConductedBy;
-  private String eventConductedByID;
+  private String recordedBy;
+  private String recordedBy_fk;
+  private String recordedByID;
+  private Double eventDurationValue;
+  private String eventDurationUnit;
   private String eventDate;
   private String eventTime;
   private Integer startDayOfYear;
@@ -37,11 +43,18 @@ public class DwcDpEvent implements Serializable {
   private String verbatimSRS;
   private String georeferenceVerificationStatus;
   private String habitat;
-  private String eventEffort;
+  private Boolean isVegetationCoverReported;
+  private String sampledSubstrateCategory;
+  private String sampledSubstrateLayer;
   private String fieldNotes;
+  private String reportedExtremeConditions;
+  private String reportedWeather;
   private String eventReferences;
   private String eventRemarks;
+  private String geologicalContext_fk;
+  private String geologicalContextID;
   private String locationID;
+  private String siteNumber;
   private String higherGeographyID;
   private String higherGeography;
   private String continent;
@@ -54,7 +67,7 @@ public class DwcDpEvent implements Serializable {
   private String county;
   private String municipality;
   private String locality;
-  private String siteNumber;
+  private String namedPlace;
   private Double minimumElevationInMeters;
   private Double maximumElevationInMeters;
   private String verticalDatum;
@@ -62,6 +75,7 @@ public class DwcDpEvent implements Serializable {
   private Double maximumDepthInMeters;
   private Double minimumDistanceAboveSurfaceInMeters;
   private Double maximumDistanceAboveSurfaceInMeters;
+  private String locationAccordingTo;
   private String locationRemarks;
   private Double decimalLatitude;
   private Double decimalLongitude;
@@ -73,11 +87,15 @@ public class DwcDpEvent implements Serializable {
   private String footprintSRS;
   private Double footprintSpatialFit;
   private String georeferencedBy;
+  private String georeferencedBy_fk;
   private String georeferencedByID;
   private String georeferencedDate;
   private String georeferenceProtocol;
-  private String georeferenceProtocolID;
+  private String georeferenceProtocol_fk;
   private String georeferenceSources;
   private String georeferenceRemarks;
   private String preferredSpatialRepresentation;
+  private String informationWithheld;
+  private String dataGeneralizations;
+  private String feedbackURL;
 }

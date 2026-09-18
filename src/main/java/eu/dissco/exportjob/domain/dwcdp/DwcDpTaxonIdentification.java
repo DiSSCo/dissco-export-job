@@ -9,17 +9,17 @@ public class DwcDpTaxonIdentification implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-  private String identificationID;
+  private String identification_fk;
   private Integer taxonSortOrder;
   private String taxonID;
   private String scientificNameID;
-  private String geoClassificationCode;
-  private String geoName;
+  private String geologicalClassificationCodes;
+  private String geologicalMaterialNames;
   private String scientificName;
   private String scientificNameAuthorship;
   private String vernacularName;
   private String taxonRank;
-  private String externalClassificationSource;
+  private String classificationSystem;
   private String kingdom;
   private String phylum;
   private String clazz;

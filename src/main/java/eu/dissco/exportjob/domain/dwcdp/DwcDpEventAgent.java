@@ -9,8 +9,8 @@ public class DwcDpEventAgent implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
-  private String agentID;
-  private String eventID;
+  private String event_fk;
+  private String agent_fk;
   private String agentRole;
   private String agentRoleIRI;
   private String agentRoleSource;

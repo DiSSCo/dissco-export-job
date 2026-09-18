@@ -9,8 +9,8 @@ public class DwcDpMaterialIdentifier implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
+  private String materialEntity_fk;
   private String identifier;
-  private String materialEntityID;
   private String identifierType;
   private String identifierTypeIRI;
   private String identifierTypeSource;

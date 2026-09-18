@@ -14,11 +14,19 @@ import eu.dissco.exportjob.repository.S3Repository;
 import eu.dissco.exportjob.repository.SourceSystemRepository;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
@@ -38,14 +46,16 @@ public abstract class AbstractExportJobService {
       Profiles.DWC_DP, ".zip",
       Profiles.DWCA, ".zip"
   );
+  public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(
+          "yyyy-MM-dd").withZone(ZoneOffset.UTC);
+  public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern(
+          "yyyy-MM-dd'T'HH:mm:ss.SSSXXX").withZone(ZoneOffset.UTC);
   protected final ElasticSearchRepository elasticSearchRepository;
   protected final IndexProperties indexProperties;
   protected final JsonMapper mapper;
   private final JobRequestComponent jobRequestComponent;
   private final S3Repository s3Repository;
   private final Environment environment;
-  private final SourceSystemRepository sourceSystemRepository;
-
   public void handleMessage(JobRequest jobRequest) throws FailedProcessingException {
     try {
       jobRequestComponent.updateJobState(jobRequest, JobStateEndpoint.RUNNING);
@@ -91,32 +101,6 @@ public abstract class AbstractExportJobService {
     return resultsProcessed > 0;
   }
 
-  protected String writeEmlFile(JobRequest jobRequest, FileSystem fs)
-      throws FailedProcessingException, IOException {
-    var sourceSystemOptional = jobRequest.searchParams().stream()
-        .filter(param -> param.inputField().contains("ods:sourceSystemID"))
-        .findFirst();
-    if (sourceSystemOptional.isEmpty()) {
-      throw new FailedProcessingException(
-          "Is a source system job, but no sourceSystemID provided: " + jobRequest.jobId());
-    }
-    var sourceSystemId = sourceSystemOptional.get().inputValue();
-    log.info("Retrieving EML for source system ID: {}", sourceSystemId);
-    var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
-    var sourceSystemFile = fs.getPath("eml.xml");
-    Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
-    return eml;
-  }
-
-  protected void writeEmlFileForSourceSystem(String sourceSystemId, FileSystem fs)
-      throws FailedProcessingException, IOException {
-    log.info("Retrieving EML for source system ID: {}", sourceSystemId);
-    var eml = sourceSystemRepository.getEmlBySourceSystemId(sourceSystemId);
-    Files.createDirectories(fs.getPath("dataset"));
-    var sourceSystemFile = fs.getPath("dataset",
-        removeProxy(sourceSystemId).replace('/', '-').toLowerCase() + ".xml");
-    Files.writeString(sourceSystemFile, eml, StandardCharsets.UTF_8);
-  }
 
   protected abstract void writeHeaderToFile() throws IOException;
 

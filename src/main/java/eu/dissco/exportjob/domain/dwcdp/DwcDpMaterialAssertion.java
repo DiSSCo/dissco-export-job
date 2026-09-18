@@ -10,7 +10,7 @@ public class DwcDpMaterialAssertion implements Serializable {
   @Serial
   private static final long serialVersionUID = 1L;
   private String assertionID;
-  private String materialEntityID;
+  private String materialEntity_fk;
   private String verbatimAssertionType;
   private String assertionType;
   private String assertionTypeIRI;
@@ -20,15 +20,15 @@ public class DwcDpMaterialAssertion implements Serializable {
   private String assertionValue;
   private String assertionValueIRI;
   private String assertionValueSource;
-  private Double assertionValueNumeric;
   private String assertionUnit;
   private String assertionUnitIRI;
   private String assertionUnitSource;
   private String assertionError;
   private String assertionBy;
+  private String assertionBy_fk;
   private String assertionByID;
   private String assertionProtocols;
-  private String assertionProtocolID;
+  private String assertionProtocol_fk;
   private String assertionReferences;
   private String assertionRemarks;
 

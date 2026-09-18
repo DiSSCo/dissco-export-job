@@ -16,7 +16,6 @@ import eu.dissco.exportjob.component.JobRequestComponent;
 import eu.dissco.exportjob.properties.IndexProperties;
 import eu.dissco.exportjob.repository.ElasticSearchRepository;
 import eu.dissco.exportjob.repository.S3Repository;
-import eu.dissco.exportjob.repository.SourceSystemRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,13 +41,11 @@ class DoiListServiceTest {
   private IndexProperties indexProperties;
   @Mock
   private Environment environment;
-  @Mock
-  private SourceSystemRepository sourceSystemRepository;
 
   @BeforeEach
   void init() {
     service = new DoiListService(elasticSearchRepository, jobRequestComponent, s3Repository,
-        indexProperties, environment, sourceSystemRepository, JSON_MAPPER);
+        indexProperties, environment, JSON_MAPPER);
   }
 
   @Test

@@ -9,8 +9,8 @@ public class DwcDpAgentIdentifier implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
+  private String agent_fk;
   private String identifier;
-  private String agentID;
   private String identifierType;
   private String identifierTypeIRI;
   private String identifierTypeSource;
